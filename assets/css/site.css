@@ -109,7 +109,7 @@ header .wrap > .btn{flex:none;margin-left:6px;padding:11px 18px;font-size:13px}
 .mnav .btn{margin-top:24px;justify-content:center;flex:none}
 
 /* ===== HOME (index) ===== */
-.hero{position:relative;min-height:100vh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;padding-bottom:7vh}
+.hero{position:relative;min-height:82vh;display:flex;align-items:center;color:#fff;overflow:hidden;padding:90px 0 6vh}
 .hero-bg{position:absolute;inset:0;z-index:0;background:url('../../old-site/images/EDITED-DSC_6032-scaled.jpg') center 46%/cover no-repeat}
 .hero::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(8,16,40,.92),rgba(8,16,40,.6) 48%,rgba(8,16,40,.26) 78%),linear-gradient(0deg,rgba(8,16,40,.6),transparent 42%)}
 .hero .wrap{position:relative;z-index:3;width:100%}
