@@ -424,7 +424,7 @@
 
   MC.openEmployee = function(id){
     const e = DB.empById(id); if(!e) return;
-    const tabs = [['personal','Personal'],['employment','Employment'],['service','Service Record'],['family','Family'],['education','Education'],['eligibility','Gov/Licensure'],['work','Work History'],['training','Training'],['medical','Medical'],['audit','Audit Trail']];
+    const tabs = [['personal','Personal'],['employment','Employment'],['service','Service Record'],['family','Family'],['education','Education'],['eligibility','Gov/Licensure'],['work','Work History'],['awards','Awards'],['orgs','Prof. Orgs'],['training','Training'],['medical','Medical'],['audit','Audit Trail']];
     modal({title:'Employee 201 File',sub:`${e.id} · ${e.name}`,size:'xl',body:`
       <div class="row" style="gap:16px;margin-bottom:18px">${avatar(e,'lg')}
         <div style="flex:1"><h3 style="font-size:19px">${e.name}</h3><div class="muted">${e.position} · ${e.dept}</div>
@@ -457,6 +457,14 @@
     if(tab==='work') return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Employer</th><th>Position</th><th>Period</th></tr></thead><tbody>
       <tr><td>Previous Institution</td><td>${e.position}</td><td>2012–2016</td></tr>
       <tr><td>Earlier Employer</td><td>Junior role</td><td>2008–2012</td></tr></tbody></table></div></div>`;
+    if(tab==='awards') return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Achievement / Award</th><th>Conferring body</th><th>Year</th></tr></thead><tbody>
+      <tr><td>Outstanding Employee of the Year</td><td>Miriam College</td><td>2024</td></tr>
+      <tr><td>Service Excellence Award</td><td>Human Resources Division</td><td>2022</td></tr>
+      <tr><td>Loyalty Award (10 years)</td><td>Miriam College</td><td>2021</td></tr></tbody></table></div>
+      <div class="hint" style="padding:12px 16px">Achievements and awards feed into performance and faculty-ranking review.</div></div>`;
+    if(tab==='orgs') return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Professional Organization</th><th>Role</th><th>Membership</th></tr></thead><tbody>
+      <tr><td>${e.rank!=='—'?'Phil. Association of Graduate Educators':'Phil. Society of IT Educators'}</td><td>Member</td><td>${badge('Active','green')}</td></tr>
+      <tr><td>MC Faculty & Staff Association</td><td>Member</td><td>${badge('Active','green')}</td></tr></tbody></table></div></div>`;
     if(tab==='training') return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Training / Seminar</th><th>Provider</th><th>Date</th><th>Certificate</th></tr></thead><tbody>
       <tr><td>Outcomes-Based Education Workshop</td><td>CHED</td><td>Aug 2025</td><td>${badge('On file','green')}</td></tr>
       <tr><td>Data Privacy Act Compliance</td><td>NPC</td><td>Mar 2025</td><td>${badge('On file','green')}</td></tr>
