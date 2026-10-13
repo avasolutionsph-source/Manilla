@@ -82,7 +82,7 @@ window.MCsite = (function () {
       '<p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Katipunan Avenue, Loyola Heights,<br>Quezon City 1108, Philippines</span></p>' +
       '<p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg><span>(02) 8930-6272 · assist@mc.edu.ph</span></p>' +
       '<p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg><span>www.mc.edu.ph</span></p></div>' +
-      '</div><div class="bottom"><span>© 2026 Miriam College. All rights reserved.</span><span class="v">VERITAS</span><span>Quezon City · Nuvali · Alviera</span></div></footer>';
+      '</div><div class="bottom"><span>© ' + (new Date().getFullYear()) + ' Miriam College. All rights reserved.</span><span class="v">VERITAS</span><span>Quezon City · Nuvali · Alviera</span></div></footer>';
   }
 
   function animate(root) {
@@ -103,19 +103,24 @@ window.MCsite = (function () {
   }
 
   function boot() {
-    if (!document.getElementById('intro')) {
+    if (!document.getElementById('sb')) {
+      var bar = document.createElement('div'); bar.className = 'sbar'; bar.innerHTML = '<i id="sb"></i>';
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+    // show the intro loader at most twice per browser session
+    var showIntro = true;
+    try { var ic = +(sessionStorage.getItem('mcIntro') || 0); if (ic >= 2) showIntro = false; else sessionStorage.setItem('mcIntro', ic + 1); } catch (e) {}
+    if (showIntro && !document.getElementById('intro')) {
       var intro = document.createElement('div'); intro.id = 'intro';
       intro.innerHTML = '<div class="seal"><img src="' + IMG + 'MC_Logo_SEAL-FA-trans-white-300x300.png" alt=""></div>';
       document.body.insertBefore(intro, document.body.firstChild);
-      var bar = document.createElement('div'); bar.className = 'sbar'; bar.innerHTML = '<i id="sb"></i>';
-      document.body.insertBefore(bar, document.body.firstChild.nextSibling);
     }
     var top = document.getElementById('mc-top'), foot = document.getElementById('mc-foot');
     if (top) top.innerHTML = headerHTML();
     if (foot) foot.innerHTML = footerHTML();
 
     var header = document.getElementById('siteHeader'), sb = document.getElementById('sb'),
-        px = [].slice.call(document.querySelectorAll('.px')), tick = false, lastY = 0;
+        px = [].slice.call(document.querySelectorAll('.px')), tick = false, lastY = 0, toTop = null;
     function onScroll() { if (tick) return; tick = true; requestAnimationFrame(function () {
       var y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
       if (header) {
@@ -125,16 +130,40 @@ window.MCsite = (function () {
       }
       lastY = y;
       if (sb) sb.style.width = (h > 0 ? y / h * 100 : 0) + '%';
+      if (toTop) toTop.classList.toggle('show', y > 600);
       for (var i = 0; i < px.length; i++) { var r = px[i].getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) { var o = (r.top - innerHeight / 2) / innerHeight; px[i].style.transform = 'translate3d(0,' + (o * -22) + 'px,0)'; } }
       tick = false; }); }
     addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
     var m = document.getElementById('mnav'), ob = document.getElementById('openNav'), cb = document.getElementById('closeNav');
-    if (ob) ob.onclick = function () { m.classList.add('open'); };
-    if (cb) cb.onclick = function () { m.classList.remove('open'); };
+    function closeMenu() { if (m) m.classList.remove('open'); document.body.classList.remove('menu-open'); }
+    if (ob) ob.onclick = function () { m.classList.add('open'); document.body.classList.add('menu-open'); };
+    if (cb) cb.onclick = closeMenu;
     if (m) {
-      [].slice.call(m.querySelectorAll('[data-close]')).forEach(function (a) { a.onclick = function () { m.classList.remove('open'); }; });
+      [].slice.call(m.querySelectorAll('[data-close]')).forEach(function (a) { a.onclick = closeMenu; });
       [].slice.call(m.querySelectorAll('.macc-h')).forEach(function (h) { h.onclick = function () { h.parentNode.classList.toggle('open'); }; });
+    }
+    addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+
+    // back-to-top
+    toTop = document.createElement('button'); toTop.className = 'to-top'; toTop.setAttribute('aria-label', 'Back to top');
+    toTop.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+    toTop.onclick = function () { scrollTo({ top: 0, behavior: 'smooth' }); };
+    document.body.appendChild(toTop);
+
+    // active nav (scroll-spy) — homepage sections only
+    var SPY = { about: 'index.html#about', values: 'index.html#about', academics: 'index.html#academics', campuses: 'index.html#campuses', news: 'index.html#news' };
+    var secs = Object.keys(SPY).map(function (id) { return document.getElementById(id); }).filter(Boolean);
+    if (secs.length) {
+      var sio = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          [].forEach.call(document.querySelectorAll('nav.main a.navactive'), function (a) { a.classList.remove('navactive'); });
+          var link = document.querySelector('nav.main a[href="' + SPY[e.target.id] + '"]');
+          if (link) link.classList.add('navactive');
+        });
+      }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+      secs.forEach(function (s) { sio.observe(s); });
     }
     addEventListener('load', function () {
       var intro = document.getElementById('intro');

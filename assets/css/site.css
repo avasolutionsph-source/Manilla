@@ -288,9 +288,20 @@ footer .bottom .v{font-family:var(--mono);color:var(--gold-light);letter-spacing
 .pfig img{width:100%;height:auto;display:block}
 
 /* Refinement */
+html{scroll-padding-top:94px}
 .about .media img,.cimg,.fimg,.nitem .th,.hero-bg{filter:saturate(.86) brightness(.98)}
 ::selection{background:var(--gold-light);color:var(--navy-deep)}
 a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+body.menu-open{overflow:hidden}
+/* active nav (scroll-spy) */
+nav.main > a.navactive,.navi > a.navactive{color:var(--navy)}
+nav.main > a.navactive::after,.navi > a.navactive::after{transform:scaleX(1);transform-origin:left}
+/* back to top */
+.to-top{position:fixed;right:24px;bottom:24px;z-index:80;width:48px;height:48px;border-radius:50%;border:none;background:var(--navy);color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:0 12px 30px rgba(10,22,54,.3);opacity:0;visibility:hidden;transform:translateY(14px) scale(.9);transition:opacity .35s var(--ease),transform .35s var(--ease),visibility .35s,background .3s}
+.to-top.show{opacity:1;visibility:visible;transform:none}
+.to-top:hover{background:var(--gold);color:var(--navy-deep)}
+.to-top svg{width:20px;height:20px}
+@media(max-width:620px){ .to-top{right:16px;bottom:16px;width:44px;height:44px} }
 
 @media(max-width:1340px){ nav.main{display:none} .hamburger{display:grid;place-items:center} header .wrap > .btn{display:none} }
 @media(max-width:1000px){
