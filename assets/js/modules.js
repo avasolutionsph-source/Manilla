@@ -766,12 +766,14 @@
   }
   MC.openReview = function(empId){
     const e=DB.empById(empId); const r=DB.reviews.find(x=>x.emp===empId)||{cycle:'H2 2026',score:4.0};
-    const crit=[['Job knowledge & competence',5],['Quality & timeliness of work',4],['Collaboration & communication',5],['Initiative & innovation',4],['Mission & values alignment',5]];
+    const cnames=['Job knowledge & competence','Quality & timeliness of work','Collaboration & communication','Initiative & innovation','Mission & values alignment'];
+    const coffs=[0.4,-0.3,0.2,-0.2,-0.1];
+    const crit=cnames.map((n,i)=>[n, Math.max(1,Math.min(5,Math.round((r.score+coffs[i])*10)/10))]);
     modal({title:'Performance evaluation',sub:`${e.name} · ${r.cycle}`,size:'lg',body:`
       <div class="grid g-2 mb"><div class="card card-pad"><div class="muted" style="font-size:11.5px">Overall score</div><div style="font-size:26px;font-weight:800;color:var(--brand)">${r.score}<span style="font-size:14px;color:var(--ink-3)"> / 5.0</span></div><div class="mt-sm">${badge(r.rating||'Satisfactory')}</div></div>
         <div class="card card-pad"><div class="muted" style="font-size:11.5px">Goals</div><div style="font-size:26px;font-weight:800">${r.met||4}<span style="font-size:14px;color:var(--ink-3)"> / ${r.goals||5} met</span></div><div class="prog mt-sm"><i style="width:${(r.met||4)/(r.goals||5)*100}%;background:var(--green)"></i></div></div></div>
-      <h4 style="font-size:14px;margin-bottom:10px">Competency ratings</h4>
-      ${crit.map(([c,v])=>`<div class="cl-row" style="padding:11px 14px;margin-bottom:8px"><div style="flex:1;font-size:13px;font-weight:600">${c}</div><div class="row" style="gap:3px">${[1,2,3,4,5].map(n=>`<span style="color:${n<=v?'var(--gold)':'var(--line)'}">${icon('star')}</span>`).join('')}</div></div>`).join('')}
+      <div class="between" style="margin-bottom:12px"><h4 style="font-size:14px">Competency ratings</h4><span class="muted" style="font-size:11.5px">Overall <b>${r.score}</b> = average of the 5 ratings</span></div>
+      <div class="ai-analysis" style="border:none;padding:0;background:none">${crit.map(([c,v])=>{const col=v>=4.5?'var(--green)':v>=3.5?'var(--brand-2)':'var(--amber)';return `<div class="cb-row"><div class="cb-top"><span class="cl">${c}</span><span class="cs" style="color:${col}">${v.toFixed(1)}<span style="color:var(--ink-3);font-weight:400"> / 5</span></span></div><div class="cb-bar"><i style="width:${v/5*100}%;background:${col}"></i></div></div>`;}).join('')}</div>
       <div class="field mt"><label>Individual Development Plan (IDP)</label><textarea class="input">Focus on research output and completion of doctoral units. Nominate for Research & Publication Workshop. Target 2 publications within AY.</textarea></div>
       <div class="alertbar info">${icon('info')} Outstanding/VS ratings may trigger configurable merit increases in Payroll — subject to approval.</div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="UI.toast('Saved as draft','info')">Save draft</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Evaluation submitted','ok','Routed for employee acknowledgment')">${icon('send')} Submit & route</button>`});

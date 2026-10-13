@@ -503,6 +503,15 @@ MC.aiSend = function (text) {
   }, 700);
 };
 
+/* ---------- Esc closes the topmost overlay ---------- */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const ai = document.getElementById('aiPanel'); if (ai) { ai.remove(); return; }
+  if (document.getElementById('popover')) { closePopover(); return; }
+  if (document.getElementById('drawer')) { closeDrawer(); return; }
+  if (document.getElementById('modal-overlay')) { closeModal(); return; }
+});
+
 /* ---------- boot ---------- */
 window.addEventListener('DOMContentLoaded', () => {
   try {
