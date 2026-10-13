@@ -73,7 +73,7 @@ window.MCsite = (function () {
   }
 
   function footerHTML() {
-    return '<footer class="site"><div class="top">' +
+    return '<footer class="site" id="contact"><div class="top">' +
       '<div><div class="fb"><img src="' + IMG + 'MC_Logo_SEAL-FA-trans-white-300x300.png" alt=""><div><b>Miriam College</b><span>Veritas · Est. 1926</span></div></div>' +
       '<p style="margin:0;max-width:34ch">A Filipino Catholic learning community that nurtures the whole person committed to lead in mission and service for the greater good.</p></div>' +
       '<div><h4>Explore</h4><ul><li><a href="index.html#about">About MC</a></li><li><a href="index.html#academics">Academics</a></li><li><a href="page.html?p=admissions-heu">Admissions</a></li><li><a href="index.html#campuses">Campuses</a></li></ul></div>' +
@@ -144,6 +144,17 @@ window.MCsite = (function () {
       [].slice.call(m.querySelectorAll('.macc-h')).forEach(function (h) { h.onclick = function () { h.parentNode.classList.toggle('open'); }; });
     }
     addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+
+    // smooth in-page scrolling for homepage section links (no reload)
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a) return;
+      var href = a.getAttribute('href') || '';
+      var isHome = location.pathname === '/' || /(^|\/)index\.html$/.test(location.pathname) || location.pathname === '';
+      if (!isHome) return;
+      if (href === 'index.html' || href === 'index.html#top' || href === '#top') { e.preventDefault(); closeMenu(); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      var mm = href.match(/^(?:index\.html)?#(.+)$/);
+      if (mm) { var el = document.getElementById(mm[1]); if (el) { e.preventDefault(); closeMenu(); el.scrollIntoView({ behavior: 'smooth' }); } }
+    });
 
     // back-to-top
     toTop = document.createElement('button'); toTop.className = 'to-top'; toTop.setAttribute('aria-label', 'Back to top');
