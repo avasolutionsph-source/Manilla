@@ -620,16 +620,22 @@
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.toast('Payslip downloaded','ok','PDF · ${e.name}')">${icon('download')} Download PDF</button>`});
   };
   MC.postJE = function(){
-    modal({title:'Post journal entries to SAP',sub:'Accounting integration',body:`
-      <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody>
-        <tr><td>Salaries & Wages Expense</td><td>${fmt.peso(9847200)}</td><td>—</td></tr>
-        <tr><td>Withholding Tax Payable</td><td>—</td><td>${fmt.peso(1108558)}</td></tr>
-        <tr><td>SSS / PhilHealth / Pag-IBIG Payable</td><td>—</td><td>${fmt.peso(915000)}</td></tr>
-        <tr><td>Loans Payable</td><td>—</td><td>${fmt.peso(386786)}</td></tr>
-        <tr><td>Cash in Bank — Payroll</td><td>—</td><td>${fmt.peso(7436856)}</td></tr>
+    const dr=9847200, cr=1108558+915000+386786+7436856;
+    const vcheck=(ok,t)=>`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--${ok?'green':'red'}-bg);color:var(--${ok?'green':'red'})">${icon(ok?'check':'x')}</div><div style="flex:1;font-size:12.5px;font-weight:600">${t}</div>${badge(ok?'Pass':'Fail',ok?'green':'red')}</div>`;
+    modal({title:'Post journal entries to SAP',sub:'JE-2026-10-204 · Oct 1–15, 2026',size:'lg',body:`
+      <div class="card mb"><div class="table-wrap"><table class="tbl"><thead><tr><th>Account</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead><tbody>
+        <tr><td>Salaries & Wages Expense</td><td style="text-align:right">${fmt.peso(9847200)}</td><td style="text-align:right">—</td></tr>
+        <tr><td>Withholding Tax Payable</td><td style="text-align:right">—</td><td style="text-align:right">${fmt.peso(1108558)}</td></tr>
+        <tr><td>SSS / PhilHealth / Pag-IBIG Payable</td><td style="text-align:right">—</td><td style="text-align:right">${fmt.peso(915000)}</td></tr>
+        <tr><td>Loans Payable</td><td style="text-align:right">—</td><td style="text-align:right">${fmt.peso(386786)}</td></tr>
+        <tr><td>Cash in Bank — Payroll</td><td style="text-align:right">—</td><td style="text-align:right">${fmt.peso(7436856)}</td></tr>
+        <tr style="border-top:2px solid var(--line)"><td><b>Totals</b></td><td style="text-align:right"><b>${fmt.peso(dr)}</b></td><td style="text-align:right"><b>${fmt.peso(cr)}</b></td></tr>
       </tbody></table></div></div>
-      <div class="alertbar info mt">${icon('link')} JE-2026-10-204 will post to the Accounting SAP system via secure API. System-to-system authentication applies.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Posted to SAP','ok','JE-2026-10-204 · balanced ✓')">${icon('arrowRight')} Post to SAP</button>`});
+      <div class="ai-analysis">
+        <div class="between"><span class="hd" style="color:var(--teal)">${icon('shield')} Pre-post validation</span>${badge(dr===cr?'Ready to post':'Blocked',dr===cr?'green':'red')}</div>
+        <div class="mt">${vcheck(dr===cr,`Entry is balanced — debits ${fmt.peso(dr)} = credits ${fmt.peso(cr)}`)}${vcheck(true,'All accounts mapped to the SAP chart of accounts')}${vcheck(true,'Posting period matches the payroll cutoff (Oct 1–15, 2026)')}${vcheck(true,'No duplicate journal entry for this period')}${vcheck(true,'Secure system-to-system authentication established')}</div>
+      </div>`,
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" ${dr!==cr?'disabled':''} onclick="UI.closeModal();UI.toast('Posted to SAP','ok','JE-2026-10-204 · balanced ✓')">${icon('arrowRight')} Post to SAP</button>`});
   };
 
   /* ========================================================
@@ -642,7 +648,7 @@
       <div class="page-head"><div><div class="t">Benefits Administration</div><div class="d">Mandatory & company-sponsored benefits, claims, and dependents.</div></div>
         <div class="row wrap"><button class="btn" id="bClaims">${icon('receipt')} Claims</button><button class="btn primary" id="bEnroll">${icon('plus')} Enroll employee</button></div></div>
 
-      <div class="mb">${aiBanner(`<b>AI reminder:</b> The Educational Benefit window closes Nov 15 — 114 eligible dependents are not yet enrolled. Send targeted reminders?`)}</div>
+      <div class="mb">${aiBanner(`<b>AI reminder:</b> The Educational Benefit window closes Nov 15 — 114 eligible dependents are not yet enrolled. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.benefitGap()">${icon('eye')} Who</button>`)}</div>
 
       <div class="grid g-4 mb">
         ${stat({icon:'heartPulse',color:'red',value:'96.6%',label:'HMO enrollment'})}
@@ -676,6 +682,15 @@
       <td>${c.status==='Pending'?`<button class="btn sm primary" onclick="MC.decideClaim('${c.id}')">Approve</button>`:c.status==='Processing'?`<button class="btn sm" onclick="UI.toast('Claim in processing','info','${c.id}')">Track</button>`:`<button class="btn sm" onclick="UI.toast('Claim ${c.id}','info','${c.status}')">View</button>`}</td></tr>`).join('')}</tbody>`;
   }
   MC.decideClaim = function(id){ const c=DB.claims.find(x=>x.id===id); c.status='Approved'; toast('Claim approved','ok',`${id} · ${c.emp}`); const t=$('#bClaimsTbl'); if(t)t.innerHTML=claimsTable(); };
+  MC.benefitGap = function(){
+    const units=[['Basic Education Unit',62],['Higher Education Unit',38],['Shared services & admin',14]];
+    modal({title:'Educational benefit — not yet enrolled',sub:'Enrollment closes Nov 15',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Eligible but not enrolled</span>${badge('114 dependents','amber')}</div>
+      <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Of <b>260 eligible dependents</b>, 146 are enrolled and <b>114 have not completed enrollment</b>. By employee unit:</p>
+      <div class="mt-sm">${units.map(u=>`<div class="cb-row"><div class="cb-top"><span class="cl">${u[0]}</span><span class="cw">${u[1]} dependents</span><span class="cs" style="color:var(--amber)">${Math.round(u[1]/114*100)}%</span></div><div class="cb-bar"><i style="width:${u[1]/62*100}%;background:var(--amber)"></i></div></div>`).join('')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Targeted reminders are drafted for HR review before sending.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Reminders queued','ok','114 reminders drafted for HR review')">${icon('send')} Draft reminders</button>`});
+  };
   MC.enrollBenefit = function(){
     modal({title:'Enroll employee in benefit',body:`
       <div class="field"><label>Employee</label><select class="select">${DB.employees.map(e=>`<option>${e.name}</option>`).join('')}</select></div>
@@ -783,7 +798,7 @@
       <div class="page-head"><div><div class="t">Offboarding, Clearance & Separation</div><div class="d">Automated clearance routing, exit interviews, and final pay.</div></div>
         <button class="btn primary" id="ofNew">${icon('logout')} Initiate separation</button></div>
 
-      <div class="mb">${aiBanner(`<b>Attrition analysis:</b> Exit-interview themes point to compensation competitiveness and workload. Retention recommendation: review contractual faculty load for AY 2026–2027.`)}</div>
+      <div class="mb">${aiBanner(`<b>Attrition analysis:</b> Exit-interview themes point to compensation competitiveness and workload. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.attritionThemes()">${icon('eye')} Themes</button>`)}</div>
 
       <div class="grid mb" style="grid-template-columns:1fr 1.4fr">
         <div class="card"><div class="card-head"><h3>Active separations</h3></div><div class="card-pad">
@@ -822,6 +837,15 @@
       <div class="field"><label>Reason / remarks</label><textarea class="input"></textarea></div>
       <div class="alertbar warn">${icon('alertTriangle')}<div style="flex:1">This will auto-trigger: clearance workflow, asset accountability, benefits & payroll validation, exit interview, records archiving.</div></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Separation initiated','ok','Clearance routed to all offices')">${icon('logout')} Initiate</button>`});
+  };
+  MC.attritionThemes = function(){
+    const themes=[['Compensation competitiveness',46,'Pay vs. market & internal equity'],['Career growth & promotion',31,'Unclear advancement timelines'],['Workload & balance',23,'Load during peak terms']];
+    modal({title:'Exit-interview themes',sub:'Last 12 months · aggregated',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Why people leave</span>${badge('Advisory','amber')}</div>
+      <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Themes are aggregated from structured exit interviews. Attrition is concentrated in <b>contractual faculty</b> near end-of-contract — no single manager cluster detected.</p>
+      <div class="mt-sm">${themes.map(t=>`<div class="cb-row"><div class="cb-top"><span class="cl">${t[0]}</span><span class="cw">${t[2]}</span><span class="cs" style="color:var(--violet)">${t[1]}%</span></div><div class="cb-bar"><i style="width:${t[1]}%;background:var(--violet)"></i></div></div>`).join('')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Recommendation: review contractual faculty load & comp for AY 2026–2027 — subject to leadership approval.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Retention review opened','ok','Routed to HR & academic leadership')">${icon('check')} Open retention review</button>`});
   };
   MC.exitInterview = function(){
     modal({title:'Exit interview',sub:'Digital form · AI theme analysis',size:'lg',body:`

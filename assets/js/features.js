@@ -34,10 +34,10 @@
       </div>
 
       <div class="grid mb" style="grid-template-columns:1.5fr 1fr">
-        <div class="card"><div class="card-head"><div><h3>Attrition forecast</h3><div class="sub">Actual + 4-month AI projection</div></div><span class="ai-flag">${icon('sparkles')} Predictive</span></div>
+        <div class="card"><div class="card-head"><div><h3>Attrition forecast</h3><div class="sub">Actual + 4-month AI projection</div></div><div class="row" style="gap:8px"><span class="ai-flag">${icon('sparkles')} Predictive</span><button class="btn sm" onclick="MC.execAttrition()">${icon('eye')} Explain</button></div></div>
           <div class="card-pad">${charts.line([5.8,6.0,6.4,6.1,6.2,6.3,6.1,6.0,6.2,6.4],{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'],color:'var(--violet)'})}
           <div class="hint" style="margin-top:6px">Dashed region beyond Oct is AI-projected. Forecast band: 6.0–6.5%.</div></div></div>
-        <div class="card"><div class="card-head"><h3>Succession readiness</h3></div><div class="card-pad" style="text-align:center">
+        <div class="card"><div class="card-head"><h3>Succession readiness</h3><button class="btn sm" onclick="MC.execSuccession()">${icon('eye')} Details</button></div><div class="card-pad" style="text-align:center">
           ${charts.ring(78,{size:150,color:'var(--brand-2)',label:'roles covered'})}
           <div class="row" style="justify-content:center;gap:18px;margin-top:14px">
             <div><div style="font-size:20px;font-weight:800;color:var(--green)">7</div><div class="muted" style="font-size:11.5px">Ready now</div></div>
@@ -69,7 +69,32 @@
   function miniKpi(v,l,c){ return `<div class="card card-pad" style="padding:16px"><div class="v" style="font-size:22px;font-weight:800;color:var(--${c==='navy'?'brand':c})">${v}</div><div class="muted" style="font-size:11.5px;margin-top:2px">${l}</div></div>`; }
   function watch(ic,c,t,d,rec){ return `<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--${c}-bg);color:var(--${c})">${icon(ic)}</div>
     <div style="flex:1"><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:11.5px">${d}</div></div>
-    <div style="text-align:right;max-width:230px"><span class="ai-flag" style="white-space:normal">${icon('sparkles')} ${rec}</span></div></div>`; }
+    <div style="text-align:right;max-width:240px;display:flex;flex-direction:column;align-items:flex-end;gap:7px"><span class="ai-flag" style="white-space:normal">${icon('sparkles')} ${rec}</span><button class="btn sm" onclick="UI.toast('Routed for approval','ok','${rec.replace(/'/g,'')}')">Act on this</button></div></div>`; }
+
+  MC.execAttrition = function(){
+    const segs=[['Contractual faculty',11.4,'Largest driver · end-of-contract'],['Probationary staff',7.8,'Early-tenure turnover'],['Regular faculty',3.1,'Stable'],['Regular staff / admin',2.6,'Stable']];
+    const col=v=>v>=8?'var(--red)':v>=5?'var(--amber)':'var(--green)';
+    modal({title:'Attrition forecast — how it is derived',sub:'Next-quarter projection 6.0–6.5%',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Forecast drivers</span>${badge('Predictive','violet')}</div>
+      <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">The trailing 12-month rate is <b>6.2%</b>; the model projects <b>6.0–6.5%</b> next quarter. The biggest driver is contractual faculty nearing end-of-contract. Exit-interview themes: compensation (46%), career growth (31%), workload (23%).</p>
+      <div class="muted" style="font-size:11.5px;margin-top:14px">Attrition rate by segment:</div>
+      <div class="mt-sm">${segs.map(s=>`<div class="cb-row"><div class="cb-top"><span class="cl">${s[0]}</span><span class="cw">${s[2]}</span><span class="cs" style="color:${col(s[1])}">${s[1]}%</span></div><div class="cb-bar"><i style="width:${s[1]/12*100}%;background:${col(s[1])}"></i></div></div>`).join('')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Decision-support only · model reviewed monthly, with human oversight.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Retention plan drafted','ok','For 3 high-performing contractual faculty')">${icon('check')} Draft retention plan</button>`});
+  };
+  MC.execSuccession = function(){
+    const roles=[['Director, Property & Supply','No ready-now successor · ~18 months out','Accelerate IDP'],['Dean — one academic unit','Retirement within 3 years · thin pipeline','Develop 2 candidates']];
+    modal({title:'Succession readiness — detail',sub:'18 critical roles tracked',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Coverage</span>${badge('78% covered','blue')}</div>
+      <div class="row mt" style="justify-content:space-between;max-width:340px">
+        <div><b style="font-size:20px;color:var(--green)">7</b> <span class="muted" style="font-size:12px">ready now</span></div>
+        <div><b style="font-size:20px;color:var(--brand)">11</b> <span class="muted" style="font-size:12px">in pipeline</span></div>
+        <div><b style="font-size:20px;color:var(--amber)">2</b> <span class="muted" style="font-size:12px">at risk</span></div></div>
+      <div class="muted" style="font-size:11.5px;margin-top:16px">Roles needing attention:</div>
+      <div class="mt-sm">${roles.map(r=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--amber-bg);color:var(--amber)">${icon('alertTriangle')}</div><div style="flex:1"><b style="font-size:13px">${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></div><span class="ai-flag" style="white-space:normal">${r[2]}</span></div>`).join('')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Advisory · appointments require Board / VP approval.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Development plans accelerated','ok','3 successors flagged for fast-track')">${icon('check')} Accelerate plans</button>`});
+  };
 
   /* ========================================================
      2. INTERACTIVE ORG CHART
