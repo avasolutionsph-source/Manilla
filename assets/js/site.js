@@ -120,9 +120,8 @@ window.MCsite = (function () {
       var y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
       if (header) {
         header.classList.toggle('scrolled', y > 12);
-        if (y < 90) header.classList.remove('nav-hidden');
-        else if (y - lastY > 4) header.classList.add('nav-hidden');
-        else if (lastY - y > 4) header.classList.remove('nav-hidden');
+        if (y < 90 || y < lastY) header.classList.remove('nav-hidden'); // top, or ANY scroll up → show
+        else if (y > lastY + 5) header.classList.add('nav-hidden');     // scroll down → hide
       }
       lastY = y;
       if (sb) sb.style.width = (h > 0 ? y / h * 100 : 0) + '%';
