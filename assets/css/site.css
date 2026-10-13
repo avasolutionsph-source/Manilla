@@ -293,6 +293,13 @@ html{scroll-padding-top:94px}
 ::selection{background:var(--gold-light);color:var(--navy-deep)}
 a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
 body.menu-open{overflow:hidden}
+/* page fade-in transition (auto-plays, never blocks clicks) */
+.xfade{position:fixed;inset:0;z-index:1500;background:var(--bg);opacity:0;pointer-events:none;animation:xfadeout .55s var(--ease) forwards}
+@keyframes xfadeout{0%{opacity:1}100%{opacity:0}}
+/* keyboard-accessible dropdowns */
+.navi:focus-within > a .cv{transform:rotate(180deg)}
+.navi:focus-within > a::after{transform:scaleX(1);transform-origin:left}
+.navi:focus-within .drop{opacity:1;visibility:visible;transform:none}
 /* active nav (scroll-spy) */
 nav.main > a.navactive,.navi > a.navactive{color:var(--navy)}
 nav.main > a.navactive::after,.navi > a.navactive::after{transform:scaleX(1);transform-origin:left}

@@ -165,6 +165,23 @@ window.MCsite = (function () {
       }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
       secs.forEach(function (s) { sio.observe(s); });
     }
+    // subtle page fade-in on arrival
+    var xf = document.createElement('div'); xf.className = 'xfade'; document.body.appendChild(xf);
+    setTimeout(function () { if (xf && xf.parentNode) xf.parentNode.removeChild(xf); }, 700);
+
+    // prefetch internal pages on hover for near-instant navigation
+    var pref = {};
+    document.addEventListener('mouseover', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (!href || href.charAt(0) === '#' || href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) return;
+      if (/^(https?:)?\/\//.test(href) && href.indexOf(location.host) === -1) return; // external
+      var path = href.split('#')[0]; if (!path || pref[path]) return;
+      pref[path] = 1;
+      var l = document.createElement('link'); l.rel = 'prefetch'; l.href = path; document.head.appendChild(l);
+    }, { passive: true });
+
     addEventListener('load', function () {
       var intro = document.getElementById('intro');
       setTimeout(function () { if (intro) intro.classList.add('gone'); }, 900);
