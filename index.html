@@ -95,8 +95,7 @@ nav.main a:hover::after{transform:scaleX(1);transform-origin:left}
 
 /* HERO — editorial, left-aligned, Ken Burns + parallax */
 .hero{position:relative;min-height:100vh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;padding-bottom:7vh}
-.hero-bg{position:absolute;inset:-8% -4%;z-index:0;background:url('old-site/images/EDITED-DSC_6032-scaled.jpg') center 30%/cover no-repeat;animation:kb 26s var(--ease2) infinite alternate;will-change:transform}
-@keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.14)}}
+.hero-bg{position:absolute;inset:0;z-index:0;background:url('old-site/images/EDITED-DSC_6032-scaled.jpg') center 30%/cover no-repeat}
 .hero::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(8,16,40,.92),rgba(8,16,40,.6) 48%,rgba(8,16,40,.26) 78%),linear-gradient(0deg,rgba(8,16,40,.6),transparent 42%)}
 .hero .wrap{position:relative;z-index:3;width:100%}
 .hero .eyebrow{color:var(--gold-light)}
@@ -150,8 +149,10 @@ section.block.paper{background:var(--paper)}
 .about{display:grid;grid-template-columns:1fr 1.05fr;gap:0;align-items:center}
 .about .media{position:relative;z-index:1}
 .about .media .frame{overflow:hidden;border-radius:3px}
-.about .media img{width:100%;height:560px;object-fit:cover;transform:scale(1.08);transition:transform 1.6s var(--ease)}
+.about .media img{width:100%;height:560px;object-fit:cover;transform:scale(1.07);transition:transform 1.6s var(--ease)}
 .about .media.in img{transform:scale(1)}
+.js .feat .fimg{transform:scale(1.06);transition:transform 1.5s var(--ease)}
+.js .feat.in .fimg{transform:scale(1)}
 .about .media .vlabel{position:absolute;top:30px;left:-16px;writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);background:var(--bg);padding:14px 6px}
 .about .media .floatcard{position:absolute;right:-40px;bottom:-40px;background:var(--navy);color:#fff;padding:28px 32px;border-radius:3px;box-shadow:0 30px 70px rgba(10,22,54,.35);z-index:2;max-width:220px}
 .about .media .floatcard .big{font-family:var(--disp);font-size:52px;font-weight:600;color:var(--gold-light);line-height:1}
@@ -386,7 +387,7 @@ a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--
     <div><h2 data-reveal="up">A century of forming leaders of competence and conscience.</h2></div>
   </div>
   <div class="about">
-    <div class="media clip" data-reveal>
+    <div class="media">
       <span class="vlabel">Veritas · 1926</span>
       <div class="frame"><img src="old-site/images/EDITED-2-MMJ-BUILDING-scaled.jpg" alt="Miriam College campus"></div>
       <div class="floatcard"><div class="big">100</div><div class="t">Years toward the Miriam Centennial</div></div>
@@ -455,7 +456,7 @@ a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--
     <div><h2 data-reveal="up">Highlights & stories from the community.</h2></div>
   </div>
   <div class="news">
-    <a class="feat clip" data-reveal href="#news"><div class="fimg" style="background-image:url('old-site/images/IMG_6085-scaled-1.jpg')"></div><div class="fb"><div class="cat">Partnership</div><h3>Strengthening child protection competencies</h3><p>DSWD Academy, UNICEF Philippines, and Miriam College partner to advance child-rights advocacy nationwide.</p></div></a>
+    <a class="feat" href="#news"><div class="fimg" style="background-image:url('old-site/images/IMG_6085-scaled-1.jpg')"></div><div class="fb"><div class="cat">Partnership</div><h3>Strengthening child protection competencies</h3><p>DSWD Academy, UNICEF Philippines, and Miriam College partner to advance child-rights advocacy nationwide.</p></div></a>
     <div class="nlist">
       <a class="nitem" data-reveal="up" href="#news"><div class="th" style="background-image:url('old-site/images/DSCF6285-edit-scaled.jpg')"></div><div><div class="cat">Milestone</div><h4>MC Alviera opens its Higher Education Unit</h4></div></a>
       <a class="nitem" data-reveal="up" style="--d:.1s" href="#news"><div class="th" style="background-image:url('old-site/images/EDITED-DSCF6974-scaled.jpg')"></div><div><div class="cat">Centennial</div><h4>Toward Miriam's 100th year — MC100</h4></div></a>
@@ -530,15 +531,19 @@ a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--
       var y=window.scrollY, h=document.documentElement.scrollHeight-innerHeight;
       header.classList.toggle('scrolled',y>12);
       sb.style.width=(h>0?(y/h*100):0)+'%';
-      if(heroBg&&y<innerHeight) heroBg.style.transform='translate3d(0,'+(y*.32)+'px,0)';
-      for(var i=0;i<px.length;i++){var r=px[i].getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight){var off=(r.top-innerHeight/2)/innerHeight;px[i].style.transform='translate3d(0,'+(off*-26)+'px,0)';}}
+      for(var i=0;i<px.length;i++){var r=px[i].getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight){var off=(r.top-innerHeight/2)/innerHeight;px[i].style.transform='translate3d(0,'+(off*-22)+'px,0)';}}
       ticking=false;
     });
   }
   addEventListener('scroll',onScroll,{passive:true}); onScroll();
   // reveal on scroll
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.16,rootMargin:'0px 0px -8% 0px'});
-  [].slice.call(document.querySelectorAll('[data-reveal],.clip,.rule,.stat,.about .media')).forEach(function(el){io.observe(el);});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0,rootMargin:'0px 0px -10% 0px'});
+  var revealEls=[].slice.call(document.querySelectorAll('[data-reveal],.rule,.stat,.about .media,.feat'));
+  revealEls.forEach(function(el){io.observe(el);});
+  // safety net — never leave anything hidden if the observer misses it
+  function failsafe(){revealEls.forEach(function(el){var r=el.getBoundingClientRect();if(r.top<innerHeight*0.92){el.classList.add('in');}});}
+  addEventListener('load',function(){setTimeout(failsafe,300);});
+  setTimeout(failsafe,2600);
   // count-up
   function animCount(el){
     var t=+el.getAttribute('data-count'), plain=el.getAttribute('data-plain'), dur=1500, st=null;
