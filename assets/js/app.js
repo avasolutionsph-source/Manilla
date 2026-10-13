@@ -482,17 +482,25 @@ MC.openAI = function () {
 };
 MC.aiSend = function (text) {
   const body = $('#aiBody'); if (!body) return;
-  body.querySelector('.ai-chips')?.remove();
+  $$('.ai-chips', body).forEach(c => c.remove());
   body.insertAdjacentHTML('beforeend', `<div class="ai-msg user">${text}</div>`);
   const typing = document.createElement('div'); typing.className='ai-msg bot'; typing.innerHTML = `<div class="ai-typing"><i></i><i></i><i></i></div>`;
   body.appendChild(typing); body.scrollTop = body.scrollHeight;
-  const ql = text.toLowerCase();
-  const kb = MC.AI[MC.state.role].kb;
-  const hit = kb.find(x => x.k.some(w => ql.includes(w)));
+  const ql = text.toLowerCase().trim();
+  const cfg = MC.AI[MC.state.role];
+  const greet = /^(hi|hello|hey|yo|kumusta|kamusta|good (morning|afternoon|evening)|what can you do|help|start)\b/.test(ql) || ql==='hi' || ql==='hello';
+  const hit = cfg.kb.find(x => x.k.some(w => ql.includes(w)));
   const fallback = MC.state.role==='Applicant'
-    ? `I can help with your application status, open positions, next steps, or about Miriam College. Try one of those!`
-    : `I can help with that area. Try the suggested topics — and remember, any recommendation I make is reviewed and approved by an authorized person.`;
-  setTimeout(() => { typing.innerHTML = hit ? hit.a : fallback; body.scrollTop = body.scrollHeight; }, 700);
+    ? `I can help with your application status, open positions, next steps, or about Miriam College — tap a suggestion below.`
+    : `I didn't quite catch that. Here are things I can answer — tap one below. Every recommendation I give is reviewed and approved by an authorized person.`;
+  const ans = greet ? cfg.greet : (hit ? hit.a : fallback);
+  setTimeout(() => {
+    typing.innerHTML = ans;
+    // follow-up suggestions after every answer
+    const sug = cfg.chips.filter(c => c.toLowerCase() !== ql).slice(0, 4);
+    typing.insertAdjacentHTML('afterend', `<div class="ai-chips"><div class="ai-chips-label">Suggested next</div>${sug.map(c => `<div class="ai-chip">${c}</div>`).join('')}</div>`);
+    body.scrollTop = body.scrollHeight;
+  }, 700);
 };
 
 /* ---------- boot ---------- */

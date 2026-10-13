@@ -148,6 +148,43 @@
       }).join('')}
     </div>`;
   }
+  function cbColor(s){ return s>=85?'var(--green)':s>=70?'var(--brand-2)':s>=55?'var(--amber)':'var(--ink-3)'; }
+  function roleCriteria(role){
+    if(/Professor|Instructor|Teacher|Faculty|Dean|Lecturer/i.test(role||'')) return [
+      {k:'Educational attainment',w:22},{k:'Teaching experience',w:20},{k:'Research & publications',w:16},
+      {k:'Licensure (PRC / LET)',w:14},{k:'Subject-matter expertise',w:16},{k:'Communication & values fit',w:12}];
+    return [
+      {k:'Educational attainment',w:20},{k:'Relevant work experience',w:22},{k:'Certifications',w:16},
+      {k:'Core technical skills',w:20},{k:'Tools & systems',w:12},{k:'Communication & values fit',w:10}];
+  }
+  function cbreak(a){
+    const crit=roleCriteria(a.role), M=a.match;
+    const seed=[...a.id].reduce((s,c)=>s+c.charCodeAt(0),0);
+    const scores=[]; let wpts=0, i;
+    for(i=0;i<crit.length-1;i++){ const off=((seed>>(i*2))%11)-5; const s=Math.max(55,Math.min(100,M+off)); scores.push(s); wpts+=s*crit[i].w/100; }
+    const lw=crit[crit.length-1].w; let ls=Math.round((M-wpts)*100/lw); ls=Math.max(55,Math.min(100,ls)); scores.push(ls);
+    let total=0; for(i=0;i<crit.length;i++) total+=scores[i]*crit[i].w/100;
+    return { crit, scores, total:Math.round(total) };
+  }
+  function aiAnalysisHTML(a){
+    const b=cbreak(a);
+    const rec = a.match>=90?['Fast-track','green']:a.match>=80?['Recommend interview','blue']:a.match>=68?['Shortlist','amber']:['Talent pool','gray'];
+    return `<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} AI Screening Analysis</span>${badge(rec[0],rec[1])}</div>
+      <div class="between mt" style="align-items:baseline"><span class="muted" style="font-size:12px">Overall competency match</span><b style="font-size:22px;color:${cbColor(a.match)}">${a.match}%</b></div>
+      <div class="prog" style="margin-top:6px;height:7px"><i style="width:${a.match}%;background:${cbColor(a.match)}"></i></div>
+      <div class="muted" style="font-size:11.5px;margin-top:12px">How this score was computed — weighted average of ${b.crit.length} factors:</div>
+      <div class="mt-sm">${b.crit.map((c,i)=>{const s=b.scores[i];return `<div class="cb-row">
+        <div class="cb-top"><span class="cl">${c.k}</span><span class="cw">weight ${c.w}%</span><span class="cs" style="color:${cbColor(s)}">${s}%</span></div>
+        <div class="cb-bar"><i style="width:${s}%;background:${cbColor(s)}"></i></div></div>`;}).join('')}</div>
+      <div class="card card-pad mt" style="background:var(--surface-2);box-shadow:none;border-color:var(--line-2)">
+        <div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Analyst summary</div>
+        <p style="font-size:12.5px;color:var(--ink-2);margin:6px 0 0;line-height:1.5">${a.aiNotes}</p></div>
+      <div class="hint mt" style="display:flex;align-items:center;gap:6px">${icon('shield')} Advisory score — final shortlisting requires authorized human review.</div>
+    </div>`;
+  }
+  MC.aiAnalysisHTML = aiAnalysisHTML;
+
   function applicantCard(a){
     const col = a.match>=90?'var(--green)':a.match>=80?'var(--brand-2)':a.match>=70?'var(--amber)':'var(--ink-3)';
     return `<div class="kcard" draggable="true" data-app="${a.id}">
@@ -210,11 +247,7 @@
     const col = a.match>=90?'var(--green)':a.match>=80?'var(--brand-2)':'var(--amber)';
     drawer({ title:'Candidate profile', body:`<div style="padding:20px">
       <div class="row" style="gap:14px">${avatar(a,'lg')}<div><h3 style="font-size:18px">${a.name}</h3><div class="muted">${a.role}</div><div class="row mt-sm" style="gap:7px">${badge(a.stage)}<span class="chip">${a.id}</span></div></div></div>
-      <div class="card card-pad mt-lg" style="background:var(--violet-bg);border-color:#d7cbf5">
-        <div class="row" style="gap:8px;color:var(--violet);font-weight:700;font-size:13px">${icon('sparkles')} AI Screening Analysis</div>
-        <div class="matchbar mt"><span class="muted" style="font-size:12px">Competency match</span><div class="mb" style="height:8px"><i style="width:${a.match}%;background:${col}"></i></div><b style="color:${col};font-size:15px">${a.match}%</b></div>
-        <p style="margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--ink-2)">${a.aiNotes}</p>
-      </div>
+      <div class="mt-lg">${aiAnalysisHTML(a)}</div>
       <div class="card mt-lg"><div class="card-pad">
         <div class="kv"><span class="k">Experience</span><span class="v">${a.exp}</span></div>
         <div class="kv"><span class="k">Education</span><span class="v">${a.edu}</span></div>
@@ -248,16 +281,9 @@
   };
   MC.aiScreen = function(id){
     const a = DB.applicants.find(x=>x.id===id); if(!a) return;
-    const comp = [['Educational qualification',a.match>=85],['Relevant experience',a.match>=75],['Licensure / certification',a.match>=80],['Teaching / technical skills',a.match>=70],['Cultural & mission fit',a.match>=60],['Communication',true]];
     modal({title:'AI Resume Screening',sub:a.name+' · '+a.role,size:'lg',body:`
-      <div class="row" style="gap:16px"><div>${charts.ring(a.match,{size:130,color:a.match>=90?'var(--green)':'var(--brand-2)',label:'match'})}</div>
-        <div style="flex:1"><div class="row" style="gap:8px;color:var(--violet);font-weight:700">${icon('sparkles')} Parsed & analyzed in 1.2s</div>
-        <p style="font-size:13.5px;color:var(--ink-2);line-height:1.55;margin:10px 0 0">${a.aiNotes}</p></div></div>
-      <h4 style="margin:22px 0 10px;font-size:14px">Competency assessment</h4>
-      ${comp.map(([c,ok])=>`<div class="cl-row" style="padding:10px 14px;margin-bottom:8px">
-        <div class="cl-check" style="background:${ok?'var(--green-bg)':'var(--red-bg)'};color:${ok?'var(--green)':'var(--red)'}">${icon(ok?'check':'x')}</div>
-        <div style="flex:1;font-size:13px;font-weight:600">${c}</div>${ok?badge('Met','green'):badge('Gap','red')}</div>`).join('')}
-      <div class="alertbar ai mt-lg">${icon('shield')} This is an AI-assisted assessment. Final shortlisting and selection require authorized human review (AI Governance).</div>`,
+      <div class="muted" style="font-size:12px;display:flex;align-items:center;gap:7px;margin-bottom:14px">${icon('sparkles')} Résumé parsed & scored in 1.2s · ${a.exp} · ${a.edu}</div>
+      ${aiAnalysisHTML(a)}`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();MC.openApplicant('${a.id}')">${icon('eye')} Full profile</button>`});
   };
   MC.openJob = function(id){

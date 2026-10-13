@@ -367,6 +367,20 @@ textarea.input { resize: vertical; min-height: 80px; }
 .kcard.dragging { opacity: .5; }
 .kcard b { font-size: 12.8px; }
 .kcard .meta { display: flex; align-items: center; gap: 7px; margin-top: 8px; color: var(--ink-3); font-size: 11.5px; }
+.kcard .meta svg { width: 14px; height: 14px; flex: none; }
+
+/* AI screening analysis — minimalist */
+.ai-analysis { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: var(--surface); }
+.ai-analysis .hd { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 700; color: var(--violet); letter-spacing: .02em; }
+.ai-analysis .hd svg { width: 15px; height: 15px; }
+.cb-row { padding: 9px 0; border-bottom: 1px solid var(--line-2); }
+.cb-row:last-child { border-bottom: none; }
+.cb-top { display: flex; align-items: center; gap: 9px; }
+.cb-top .cl { font-size: 12.5px; font-weight: 600; flex: 1; }
+.cb-top .cw { font-size: 10px; color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--line); padding: 1px 7px; border-radius: 5px; white-space: nowrap; }
+.cb-top .cs { font-size: 12.5px; font-weight: 700; min-width: 36px; text-align: right; }
+.cb-bar { height: 5px; background: var(--line-2); border-radius: 10px; overflow: hidden; margin-top: 7px; }
+.cb-bar > i { display: block; height: 100%; border-radius: 10px; }
 .kcol.drop-hint { outline: 2px dashed var(--brand-2); outline-offset: -2px; }
 
 .matchbar { display:flex; align-items:center; gap:8px; margin-top:9px; }
@@ -415,6 +429,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 .ai-msg.user { background: var(--brand); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
 .ai-msg.bot b { color: var(--brand); }
 .ai-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.ai-chips-label { flex-basis: 100%; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 2px 0 1px; }
 .ai-chip { font-size: 12px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); cursor: pointer; color: var(--ink-2); }
 .ai-chip:hover { border-color: var(--brand-2); color: var(--brand); background: var(--blue-bg); }
 .ai-foot { padding: 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; background: var(--surface); }
