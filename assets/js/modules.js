@@ -185,6 +185,55 @@
   }
   MC.aiAnalysisHTML = aiAnalysisHTML;
 
+  function rankParts(f){
+    const q = /PhD/i.test(f.qualif) && !/cand/i.test(f.qualif) ? 30 : /PhD.*cand/i.test(f.qualif) ? 23 : /MA.*cand|MS.*cand/i.test(f.qualif) ? 13 : /MA|MS|Master/i.test(f.qualif) ? 19 : 15;
+    const t = Math.round((f.teaching/5)*25);
+    const s = f.service==='High'?20 : f.service==='Medium'?13 : 7;
+    let r = f.points - q - t - s; r = Math.max(0, Math.min(25, r));
+    return [
+      {k:'Academic qualifications', v:q, max:30, note:f.qualif},
+      {k:'Research & publications', v:r, max:25, note:f.research+' publications'},
+      {k:'Teaching performance', v:t, max:25, note:f.teaching+' / 5.0 rating'},
+      {k:'Institutional service', v:s, max:20, note:f.service+' involvement'}
+    ];
+  }
+  function rankBreakdownHTML(empId){
+    const f=DB.facultyRanking.find(x=>x.emp===empId); const parts=rankParts(f); const TH=75;
+    return `<div class="ai-analysis">
+      <div class="between"><span class="hd" style="color:var(--amber)">${icon('award')} Ranking computation</span>${f.eligible?badge('Promotion-eligible','green'):badge('Not yet eligible','gray')}</div>
+      <div class="between mt" style="align-items:baseline"><span class="muted" style="font-size:12px">Total ranking points</span><b style="font-size:22px;color:${f.points>=TH?'var(--green)':'var(--amber)'}">${f.points}<span style="font-size:13px;color:var(--ink-3);font-weight:400"> / 100</span></b></div>
+      <div class="prog" style="margin-top:6px;height:7px"><i style="width:${f.points}%;background:${f.points>=TH?'var(--green)':'var(--amber)'}"></i></div>
+      <div class="muted" style="font-size:11px;margin-top:5px">Promotion threshold for ${f.next}: ${TH} points</div>
+      <div class="muted" style="font-size:11.5px;margin-top:12px">Points are the sum of four criteria:</div>
+      <div class="mt-sm">${parts.map(p=>{const pct=Math.round(p.v/p.max*100);return `<div class="cb-row">
+        <div class="cb-top"><span class="cl">${p.k}</span><span class="cw">${p.note}</span><span class="cs">${p.v}<span style="color:var(--ink-3);font-weight:400">/${p.max}</span></span></div>
+        <div class="cb-bar"><i style="width:${pct}%;background:${cbColor(pct)}"></i></div></div>`;}).join('')}</div>
+      <div class="hint mt" style="display:flex;align-items:center;gap:6px">${icon('shield')} Advisory — promotion requires Dean & Ranking Committee approval.</div>
+    </div>`;
+  }
+  MC.openRankBreakdown = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId);
+    modal({title:'Faculty ranking breakdown',sub:(e?e.name:empId)+' · '+f.current,body:rankBreakdownHTML(empId),
+      foot:`<button class="btn" data-close>Close</button>${f.eligible?`<button class="btn primary" onclick="UI.closeModal();MC.promote('${empId}')">${icon('arrowRight')} Promote</button>`:''}`});
+  };
+
+  MC.aiPayrollDetail = function(){
+    modal({title:'Payroll validation · advisory',sub:'October 1–15, 2026 run',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Why this was flagged</span>${badge('Advisory','amber')}</div>
+      <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Patricia G. Villanueva (MC-1180) filed <b>4.0 hours of overtime</b> this cutoff — <b>18% above</b> her 3-month average. The rule engine surfaces it for a quick human check; it does not block the run.</p>
+      <div class="mt-lg">${kv2('This cutoff OT','₱3,800 · 4.0 hrs')}${kv2('3-month average','₱3,220 · 3.4 hrs')}${kv2('Variance','+18% ▲')}${kv2('Filing · approver','OT-1180 · Finance Director')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Advisory only — confirm the approval is valid, then release.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Reviewed & cleared','ok','OT-1180 confirmed valid')">${icon('check')} Confirm & clear</button>`});
+  };
+  MC.aiAttendanceDetail = function(){
+    const row=(id,note)=>{const e=DB.empById(id);return `<div class="cl-row" style="padding:11px 14px">${e?avatar(e):''}<div style="flex:1"><b style="font-size:13px">${e?e.name:id}</b><div class="muted" style="font-size:11.5px">${note}</div></div>${badge('Monday pattern','amber')}</div>`;};
+    modal({title:'Attendance anomaly · advisory',sub:'Habitual tardiness pattern',body:`<div class="ai-analysis">
+      <div class="between"><span class="hd">${icon('sparkles')} Pattern detected</span>${badge('Advisory','amber')}</div>
+      <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Two employees were late on <b>3 of the last 4 Mondays</b>. The engine surfaces the pattern for a supervisor conversation — not an automatic sanction.</p>
+      <div class="mt-lg">${row('MC-0631','Late 3 of 4 Mondays · avg 12 min · M10 Fingerprint')}${row('MC-0219','Late 3 of 4 Mondays · avg 9 min · Mobile (GPS)')}</div>
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Recommended: a coaching note, pending supervisor review.</div></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Coaching note drafted','ok','Routed to supervisors for review')">${icon('message')} Draft coaching note</button>`});
+  };
+
   function applicantCard(a){
     const col = a.match>=90?'var(--green)':a.match>=80?'var(--brand-2)':a.match>=70?'var(--amber)':'var(--ink-3)';
     return `<div class="kcard" draggable="true" data-app="${a.id}">
@@ -445,7 +494,7 @@
       <div class="page-head"><div><div class="t">Timekeeping & Attendance</div><div class="d">Real-time workforce visibility · biometric, web, and mobile capture.</div></div>
         <div class="row wrap"><button class="btn" id="tExport">${icon('download')} Export DTR</button><button class="btn primary" id="tFile">${icon('calendar')} File application</button></div></div>
 
-      <div class="mb">${aiBanner(`<b>AI anomaly detection:</b> 2 employees show a habitual Monday-tardiness pattern. Recommended: coaching note (not sanction), pending supervisor review.`)}</div>
+      <div class="mb">${aiBanner(`<b>AI anomaly detection:</b> 2 employees show a habitual Monday-tardiness pattern. Recommended: coaching note (not sanction). <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiAttendanceDetail()">${icon('eye')} Why</button>`)}</div>
 
       <div class="grid g-4 mb">
         ${stat({icon:'userCheck',color:'green',value:present+'',label:'Present today'})}
@@ -512,7 +561,7 @@
       <div class="page-head"><div><div class="t">Payroll & Compensation</div><div class="d">${p.period} · ${p.cutoff} · ${p.group}</div></div>
         <div class="row wrap"><button class="btn" id="pJE">${icon('link')} Post to SAP</button><button class="btn primary" id="pRun">${icon('zap')} Run payroll</button></div></div>
 
-      <div class="mb">${aiBanner(`<b>AI payroll validation:</b> 0 critical anomalies in this run. 1 advisory — an overtime entry 18% above the employee's 3-month average flagged for review.`)}</div>
+      <div class="mb">${aiBanner(`<b>AI payroll validation:</b> 0 critical anomalies in this run. 1 advisory — an overtime entry 18% above the employee's 3-month average. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiPayrollDetail()">${icon('eye')} Why</button>`)}</div>
 
       <div class="grid g-4 mb">
         ${stat({icon:'users',color:'navy',value:fmt.num(p.employees),label:'Employees in run'})}
@@ -676,7 +725,7 @@
       <div class="card"><div class="card-head"><h3>Faculty Ranking & Promotion</h3><span class="chip">AY 2025–2026 cycle</span></div>
       <div class="table-wrap"><table class="tbl"><thead><tr><th>Faculty</th><th>Current rank</th><th>Points</th><th>Qualif.</th><th>Research</th><th>Teaching</th><th>Next rank</th><th>Eligible</th></tr></thead>
       <tbody>${DB.facultyRanking.map(f=>{const e=DB.empById(f.emp);return `<tr><td class="cell-emp">${e?avatar(e):''}<div><b>${e?e.name:f.emp}</b><span>${e?e.dept:''}</span></div></td>
-        <td>${f.current}</td><td><div class="row" style="gap:8px"><div class="prog" style="width:60px"><i style="width:${f.points}%;background:${f.points>=75?'var(--green)':'var(--amber)'}"></i></div><b>${f.points}</b></div></td>
+        <td><button class="btn sm ghost" style="padding:4px 8px;gap:8px" onclick="MC.openRankBreakdown('${f.emp}')" title="See how this was computed"><div class="prog" style="width:54px"><i style="width:${f.points}%;background:${f.points>=75?'var(--green)':'var(--amber)'}"></i></div><b>${f.points}</b>${icon('info')}</button></td>
         <td>${f.qualif}</td><td>${f.research} pubs</td><td>${f.teaching}</td><td class="muted">${f.next}</td>
         <td>${f.eligible?`<button class="btn sm primary" onclick="MC.promote('${f.emp}')">Promote</button>`:badge('Not yet','gray')}</td></tr>`;}).join('')}</tbody></table></div></div>`;
     }
@@ -716,11 +765,11 @@
     MC.perfTab='ranking'; MC.go('performance');
     setTimeout(()=>toast('Faculty ranking computed','ok','2 faculty promotion-eligible'),200);
   };
-  MC.promote = function(empId){ const e=DB.empById(empId);
-    modal({title:'Promotion recommendation',sub:e.name,body:`
-      <div class="alertbar ai mb">${icon('sparkles')} AI confirms criteria met. This recommendation requires authorized human approval before any salary change.</div>
-      ${kv('Current rank',DB.facultyRanking.find(f=>f.emp===empId).current)}${kv('Recommended rank',DB.facultyRanking.find(f=>f.emp===empId).next)}${kv('Ranking points',DB.facultyRanking.find(f=>f.emp===empId).points)}${kv('Salary impact','+₱6,500 / mo (auto-staged)')}
-      <div class="field mt"><label>Approval route</label><div class="row wrap" style="gap:7px"><span class="chip">Dean</span>${icon('arrowRight')}<span class="chip">Faculty Ranking Committee</span>${icon('arrowRight')}<span class="chip">VP Academic Affairs</span></div></div>`,
+  MC.promote = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId);
+    modal({title:'Promotion recommendation',sub:e.name+' · '+f.current+' → '+f.next,body:`
+      ${rankBreakdownHTML(empId)}
+      <div class="card card-pad mt-lg">${kv('Current rank',f.current)}${kv('Recommended rank',f.next)}${kv('Salary impact','+₱6,500 / mo (auto-staged)')}</div>
+      <div class="field mt-lg"><label>Approval route</label><div class="row wrap" style="gap:7px"><span class="chip">Dean</span>${icon('arrowRight')}<span class="chip">Faculty Ranking Committee</span>${icon('arrowRight')}<span class="chip">VP Academic Affairs</span></div></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Promotion routed for approval','ok','${e.name} · pending committee review')">${icon('send')} Route for approval</button>`});
   };
 
