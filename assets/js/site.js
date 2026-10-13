@@ -115,10 +115,16 @@ window.MCsite = (function () {
     if (foot) foot.innerHTML = footerHTML();
 
     var header = document.getElementById('siteHeader'), sb = document.getElementById('sb'),
-        px = [].slice.call(document.querySelectorAll('.px')), tick = false;
+        px = [].slice.call(document.querySelectorAll('.px')), tick = false, lastY = 0;
     function onScroll() { if (tick) return; tick = true; requestAnimationFrame(function () {
       var y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
-      if (header) header.classList.toggle('scrolled', y > 12);
+      if (header) {
+        header.classList.toggle('scrolled', y > 12);
+        if (y < 90) header.classList.remove('nav-hidden');
+        else if (y - lastY > 4) header.classList.add('nav-hidden');
+        else if (lastY - y > 4) header.classList.remove('nav-hidden');
+      }
+      lastY = y;
       if (sb) sb.style.width = (h > 0 ? y / h * 100 : 0) + '%';
       for (var i = 0; i < px.length; i++) { var r = px[i].getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) { var o = (r.top - innerHeight / 2) / innerHeight; px[i].style.transform = 'translate3d(0,' + (o * -22) + 'px,0)'; } }
       tick = false; }); }
