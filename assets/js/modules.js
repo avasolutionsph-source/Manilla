@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div class="mb">${aiBanner(`<b>AI insight:</b> 3 contracts end within 90 days and 2 faculty are promotion-eligible this cycle. Attrition risk is concentrated in contractual faculty — consider early retention conversations.`)}</div>
+      <div class="mb">${aiBanner(`<b>AI insight:</b> 3 contracts end within 90 days and 2 faculty are promotion-eligible this cycle. Attrition risk is concentrated in contractual faculty. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.contractsEndingSoon()">${icon('eye')} Contracts</button> <button class="btn sm" style="padding:3px 10px" onclick="MC.perfTab='ranking';MC.go('performance')">${icon('award')} Ranking</button>`)}</div>
 
       <div class="grid mb" style="grid-template-columns:1fr 1fr">
         <div class="card">
@@ -80,7 +80,7 @@
         <div class="card">
           <div class="card-head"><div><h3>Contract alerts</h3><div class="sub">End-of-contract triggers</div></div></div>
           <div class="card-pad">
-            ${DB.employees.filter(e=>e.contractEnds).map(e=>`<div class="cl-row" style="padding:12px 14px">
+            ${DB.employees.filter(e=>e.contractEnds).map(e=>`<div class="cl-row clickable" style="padding:12px 14px;cursor:pointer" onclick="MC.openEmployee('${e.id}')">
               ${avatar(e)}<div style="flex:1"><b style="font-size:13px">${e.name}</b><div class="muted" style="font-size:11.5px">${e.type} · ${e.campus}</div></div>
               <div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--amber)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days</div></div></div>`).join('')}
             <button class="btn block mt-sm" onclick="MC.go('employees')">Review all contracts</button>
@@ -419,8 +419,25 @@
   function daysAlert(){
     const soon = DB.employees.filter(e=>e.contractEnds);
     if(!soon.length) return '';
-    return `<div class="alertbar warn mb">${icon('alertTriangle')}<div style="flex:1"><b>${soon.length} contracts ending soon.</b> End-of-contract triggers active — ${soon.map(e=>e.name.split(' ').slice(-1)).join(', ')}. Renewal workflows can be initiated from each 201 file.</div></div>`;
+    return `<div class="alertbar warn mb" style="cursor:pointer" onclick="MC.contractsEndingSoon()">${icon('alertTriangle')}<div style="flex:1"><b>${soon.length} contracts ending soon.</b> End-of-contract triggers active — ${soon.map(e=>e.name.split(' ').slice(-1)).join(', ')}. <u>Click to review &amp; renew.</u></div><button class="btn sm" onclick="event.stopPropagation();MC.contractsEndingSoon()">${icon('eye')} Review</button></div>`;
   }
+  MC.contractsEndingSoon = function(){
+    const soon = DB.employees.filter(e=>e.contractEnds).sort((a,b)=>new Date(a.contractEnds)-new Date(b.contractEnds));
+    modal({title:'Contracts ending soon',sub:soon.length+' employees · end-of-contract triggers active',body:`
+      ${soon.map(e=>`<div class="cl-row clickable" style="padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="UI.closeModal();MC.openEmployee('${e.id}')">${avatar(e)}
+        <div style="flex:1"><b style="font-size:13px">${e.name}</b><div class="muted" style="font-size:11.5px">${e.position} · ${e.type} · ${e.campus}</div></div>
+        <div style="text-align:right;min-width:92px"><div style="font-size:12px;font-weight:700;color:var(--amber)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days left</div></div>
+        <button class="btn sm" onclick="event.stopPropagation();UI.toast('Renewal initiated','ok','${e.name} · routed to Dept. Head')">${icon('refresh')} Renew</button></div>`).join('')}
+      <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('info')} Click a row to open the full 201 file, or initiate a renewal workflow.</div>`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
+  MC.attByStatus = function(kind){
+    const title={present:'Present today',late:'Late arrivals',leave:'On leave / official business'}[kind];
+    const list=DB.attendanceToday.filter(a=> kind==='present'? a.status==='Present' : kind==='late'? a.late : (a.status.includes('Leave')||a.status.includes('Business')));
+    modal({title,sub:list.length+' employees · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'}),body:`
+      ${list.map(a=>{const e=DB.empById(a.id);return `<div class="cl-row clickable" style="padding:11px 14px;margin-bottom:8px;cursor:pointer" onclick="UI.closeModal();MC.openEmployee('${a.id}')">${e?avatar(e):''}<div style="flex:1"><b style="font-size:13px">${e?e.name:a.id}</b><div class="muted" style="font-size:11.5px">${e?e.dept:''} · ${a.mode}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700">${a.timeIn}</div>${badge(a.status)}</div></div>`;}).join('')||`<div class="muted" style="text-align:center;padding:16px">None in this category today.</div>`}`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
 
   MC.openEmployee = function(id){
     const e = DB.empById(id); if(!e) return;
@@ -505,9 +522,9 @@
       <div class="mb">${aiBanner(`<b>AI anomaly detection:</b> 2 employees show a habitual Monday-tardiness pattern. Recommended: coaching note (not sanction). <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiAttendanceDetail()">${icon('eye')} Why</button>`)}</div>
 
       <div class="grid g-4 mb">
-        ${stat({icon:'userCheck',color:'green',value:present+'',label:'Present today'})}
-        ${stat({icon:'clock',color:'amber',value:late+'',label:'Late arrivals'})}
-        ${stat({icon:'calendar',color:'blue',value:leave+'',label:'On leave / OB'})}
+        ${stat({icon:'userCheck',color:'green',value:present+'',label:'Present today',onclick:"MC.attByStatus('present')"})}
+        ${stat({icon:'clock',color:'amber',value:late+'',label:'Late arrivals',onclick:"MC.attByStatus('late')"})}
+        ${stat({icon:'calendar',color:'blue',value:leave+'',label:'On leave / OB',onclick:"MC.attByStatus('leave')"})}
         ${stat({icon:'fingerprint',color:'navy',value:'94.3%',label:'Attendance rate'})}
       </div>
 
