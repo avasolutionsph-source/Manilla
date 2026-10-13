@@ -60,9 +60,6 @@ window.MCsite = (function () {
 
   function headerHTML() {
     return '' +
-    '<div class="util"><div class="wrap"><div class="left">Veritas · Est. 1926</div><div class="right">' +
-      '<a href="index.html#campuses">Campuses</a><a href="index.html#news">News</a><a href="index.html#portal">Give</a>' +
-      '<a class="portal" href="hris.html">◆ MC Portal Login</a></div></div></div>' +
     '<header class="site" id="siteHeader"><div class="wrap">' +
       '<a class="brand" href="index.html"><img src="' + IMG + 'MC_Logo_SEAL-FA-trans-blue-300x300.png" alt="Miriam College seal">' +
       '<div><b>Miriam College</b><span>Katipunan · Quezon City</span></div></a>' +
