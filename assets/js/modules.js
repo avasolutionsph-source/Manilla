@@ -496,13 +496,31 @@
       <div class="hint" style="padding:12px 16px">Complete, immutable audit trail of all 201 transactions.</div></div>`;
   }
   MC.newEmployee = function(){
+    const nums=DB.employees.map(e=>parseInt(String(e.id).replace(/\D/g,''),10)||0);
+    const nextId='MC-'+String(Math.max(0,...nums)+1).padStart(4,'0');
     modal({title:'Add employee',sub:'Auto-provisions 201 file, attendance account & payroll record',body:`
       <div class="alertbar ai mb">${icon('sparkles')}<div style="flex:1">Hiring from a candidate? Data transfers from Recruitment automatically — no re-encoding.</div></div>
-      <div class="form-row"><div class="field"><label>Full name <span class="req">*</span></label><input class="input" placeholder="Last, First M."></div><div class="field"><label>Employee ID</label><input class="input" value="MC-1601" readonly></div></div>
-      <div class="form-row"><div class="field"><label>Position</label><input class="input"></div><div class="field"><label>Department</label><select class="select">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="field"><label>Campus</label><select class="select">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label>Employment type</label><select class="select"><option>Probationary</option><option>Regular</option><option>Faculty</option><option>Contractual</option></select></div></div>
-      <div class="form-row"><div class="field"><label>Date hired</label><input class="input" type="date" value="2026-11-03"></div><div class="field"><label>Email</label><input class="input" placeholder="name@mc.edu.ph"></div></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Employee added','ok','201 file, attendance & payroll auto-created')">${icon('check')} Create & provision</button>`});
+      <div class="form-row"><div class="field"><label>Full name <span class="req">*</span></label><input class="input" id="empName" placeholder="First M. Last"></div><div class="field"><label>Employee ID</label><input class="input" id="empNewId" value="${nextId}" readonly></div></div>
+      <div class="form-row"><div class="field"><label>Position</label><input class="input" id="empPos"></div><div class="field"><label>Department</label><select class="select" id="empDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div></div>
+      <div class="form-row"><div class="field"><label>Campus</label><select class="select" id="empCampus">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label>Employment type</label><select class="select" id="empType"><option>Probationary</option><option>Regular</option><option>Faculty</option><option>Contractual</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Date hired</label><input class="input" id="empHired" type="date" value="2026-11-03"></div><div class="field"><label>Email</label><input class="input" id="empEmail" placeholder="name@mc.edu.ph"></div></div>`,
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="empSubmit">${icon('check')} Create & provision</button>`});
+    const btn=document.getElementById('empSubmit'); if(btn) btn.addEventListener('click',MC.submitEmployee);
+  };
+  MC.submitEmployee = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'').trim();
+    const name=v('empName'); if(!name){ toast('Name required','warn','Enter the full name'); return; }
+    const id=v('empNewId')||('MC-'+String(Date.now()).slice(-4));
+    const rec={ id, name, position:v('empPos')||'—', dept:v('empDept'), campus:v('empCampus'), type:v('empType'), status:'Active',
+      email:v('empEmail'), phone:'', hired:v('empHired'), sg:'—', rank:'—', supervisor:'—', birth:null, civil:'—', gender:'—',
+      tin:'', sss:'', pagibig:'', philhealth:'', contractEnds:null, color:DB.colorFor(name), initials:DB.initials(name) };
+    DB.employees.push(rec);
+    closeModal();
+    toast('Employee added','ok',`${id} · ${name}`);
+    if(MC.go && MC.state && MC.state.route==='employees') MC.go('employees');
+    if(window.MC && MC.db && MC.db.live()) MC.db.insert('employees',{ id, name, position:rec.position, dept:rec.dept, campus:rec.campus,
+      emp_type:rec.type, status:'Active', email:rec.email, hired:rec.hired||null, sg:'—', rank:'—', supervisor:'—' })
+      .catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
   /* ========================================================
@@ -561,18 +579,40 @@
   function typeTone(t){ return {'Sick Leave':'red','Vacation Leave':'teal','Official Business':'blue','Overtime':'violet','Work Hours Offset':'amber'}[t]||'gray'; }
   MC.decideApp = function(id,decision){ const a=DB.applications.find(x=>x.id===id); if(!a)return; a.status=decision;
     toast(`Application ${decision.toLowerCase()}`,decision==='Approved'?'ok':'warn',`${a.id} · ${a.empName}`);
-    const t=$('#tApps'); if(t) t.innerHTML=appsTable($('#tFilter button.active')?.dataset.f||'all'); };
+    const t=$('#tApps'); if(t) t.innerHTML=appsTable($('#tFilter button.active')?.dataset.f||'all');
+    if (window.MC && MC.db && MC.db.live()) MC.db.update('leave_applications','id',id,{status:decision}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.viewApp = function(id){ const a=DB.applications.find(x=>x.id===id);
     modal({title:a.type,sub:a.id+' · '+a.empName,body:`${kv2('Status',badge(a.status))}${kv2('Dates',fmt.date(a.from)+(a.to!==a.from?' – '+fmt.date(a.to):''))}${kv2('Duration',a.days?a.days+' day(s)':a.hours+' hour(s)')}${kv2('Filed',fmt.date(a.filed))}${kv2('Approver',a.approver)}<div class="field mt"><label>Reason</label><div class="card card-pad" style="font-size:13px">${a.reason}</div></div>`,foot:`<button class="btn primary" data-close>Close</button>`}); };
   function kv2(k,v){ return `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
   MC.fileApplication = function(){
     modal({title:'File an application',sub:'Routed to your supervisor for approval',body:`
       <div class="field"><label>Application type <span class="req">*</span></label><select class="select" id="appType"><option>Leave — Vacation</option><option>Leave — Sick</option><option>Official Business</option><option>Overtime</option><option>Work Hours Offsetting</option></select></div>
-      <div class="form-row"><div class="field"><label>From</label><input class="input" type="date" value="2026-10-20"></div><div class="field"><label>To</label><input class="input" type="date" value="2026-10-20"></div></div>
-      <div class="field"><label>Reason</label><textarea class="input" placeholder="Provide details…"></textarea></div>
+      <div class="form-row"><div class="field"><label>From</label><input class="input" type="date" id="appFrom" value="2026-10-20"></div><div class="field"><label>To</label><input class="input" type="date" id="appTo" value="2026-10-20"></div></div>
+      <div class="field"><label>Reason</label><textarea class="input" id="appReason" placeholder="Provide details…"></textarea></div>
       <div class="card card-pad" style="background:var(--surface-2)"><div class="between"><span class="muted" style="font-size:12.5px">Leave balance (VL)</span><b>9.5 days</b></div><div class="prog mt-sm"><i style="width:63%"></i></div></div>
       <div class="alertbar info mt">${icon('info')} Approved leaves automatically flow to Payroll computation.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Application filed','ok','Routed to supervisor for approval')">${icon('send')} Submit</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="appSubmit">${icon('send')} Submit</button>`});
+    const btn=document.getElementById('appSubmit'); if(btn) btn.addEventListener('click',MC.submitApplication);
+  };
+  MC.submitApplication = function(){
+    const typeMap={'Leave — Vacation':'Vacation Leave','Leave — Sick':'Sick Leave','Official Business':'Official Business','Overtime':'Overtime','Work Hours Offsetting':'Work Hours Offset'};
+    const v=id=>((document.getElementById(id)||{}).value||'');
+    const type=typeMap[v('appType')]||'Vacation Leave';
+    const from=v('appFrom')||new Date().toISOString().slice(0,10);
+    const to=v('appTo')||from;
+    const reason=v('appReason').trim();
+    const p=MC.persona(); const empId=DB.empById(p.id)?p.id:null;
+    const prefix=type==='Official Business'?'OB':type==='Overtime'?'OT':type==='Work Hours Offset'?'WO':'LV';
+    const id=`${prefix}-${String(Date.now()).slice(-4)}`;
+    let days=Math.round((new Date(to)-new Date(from))/86400000)+1; if(!(days>=0))days=1;
+    const isHours=(type==='Overtime'||type==='Work Hours Offset');
+    const filed=new Date().toISOString().slice(0,10);
+    DB.applications.unshift({ id, emp:empId, empName:p.name, type, from, to, days:isHours?0:days, hours:isHours?8:null, status:'Pending', filed, approver:'Supervisor', reason });
+    closeModal();
+    toast('Application filed','ok',`${id} · routed for approval`);
+    const t=document.getElementById('tApps'); if(t) t.innerHTML=appsTable(document.querySelector('#tFilter button.active')?.dataset.f||'all');
+    if(window.MC && MC.db && MC.db.live()) MC.db.insert('leave_applications',{ id, emp_id:empId, emp_name:p.name, leave_type:type, from_date:from, to_date:to, days:isHours?0:days, hours:isHours?8:null, status:'Pending', filed, approver:'Supervisor', reason })
+      .catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
   /* ========================================================

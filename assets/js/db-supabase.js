@@ -136,7 +136,28 @@
     return true;
   }
 
+  // ---- Write helpers (demo: anon INSERT/UPDATE; DELETE blocked by RLS) ----
+  async function write(method, path, body, prefer) {
+    const r = await fetch(`${URL}/rest/v1/${path}`, {
+      method,
+      headers: {
+        apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json',
+        ...(prefer ? { Prefer: prefer } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error(`${method} ${path} → ${r.status} ${t}`); }
+    const txt = await r.text(); return txt ? JSON.parse(txt) : null;
+  }
+
   window.MC = window.MC || {};
+  MC.db = {
+    live: () => MC.dataSource === 'supabase',
+    insert: (table, row) => write('POST', table, row, 'return=representation'),
+    update: (table, idField, idValue, patch) =>
+      write('PATCH', `${table}?${idField}=eq.${encodeURIComponent(idValue)}`, patch, 'return=representation'),
+  };
+
   MC.dataSource = 'loading';
   // Kick off the load immediately (parallel with page init).
   MC.dataReady = loadData()
