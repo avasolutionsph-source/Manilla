@@ -142,7 +142,7 @@ MC.renderLogin = function () {
         <div class="field"><label>Password</label><input class="input" type="password" value="demo-access" readonly></div>
         <button class="btn primary block" id="loginBtn">${icon('lock')} <span id="loginLbl">Sign in to ${MC.ROLES[MC.state.role].portal}</span></button>
         <div class="mfa-note">${icon('shield')} Protected by multi-factor authentication (MFA) · Role-based access control</div>
-        <div style="text-align:center;margin-top:16px"><button class="btn sm" id="kioskBtn">${icon('fingerprint')} Open Time-in Kiosk (M10 / Facial)</button></div>
+        ${(window.MC&&MC.config&&MC.config.get('features',{}).kiosk===false)?'':`<div style="text-align:center;margin-top:16px"><button class="btn sm" id="kioskBtn">${icon('fingerprint')} Open Time-in Kiosk (M10 / Facial)</button></div>`}
         <div style="text-align:center;color:var(--ink-3);font-size:11px;margin-top:18px">© 2026 Miriam College · Information & Communications Technology Office</div>
       </div>
     </div>
@@ -155,7 +155,7 @@ MC.renderLogin = function () {
     $('#loginEmail').value = loginEmailFor();
   });
   $('#loginBtn').addEventListener('click', () => MC.enterApp());
-  $('#kioskBtn').addEventListener('click', () => MC.renderKiosk());
+  $('#kioskBtn')?.addEventListener('click', () => MC.renderKiosk());
 };
 
 /* ============================================================
@@ -251,10 +251,7 @@ MC.renderApp = function () {
     <aside class="sidebar">
       <div class="brand">${SEAL}<div><b>Miriam College</b><span>${role.portal}</span></div></div>
       <nav class="nav" id="nav">
-        ${role.nav.map(g => `<div class="nav-group-label">${g.group}</div>${g.items.map(it => `
-          <div class="nav-item ${it.r===MC.state.route?'active':''}" data-route="${it.r}">
-            ${icon(it.icon)}<span>${it.label}</span>${it.badge?`<span class="nav-badge ${it.badgeRed?'red':''}">${it.badge}</span>`:''}
-          </div>`).join('')}`).join('')}
+        ${(() => { const feat=(window.MC&&MC.config&&MC.config.get)?MC.config.get('features',{}):{}; const fmap={command_center:'command',budget_sim:'budget'}; return role.nav.map(g => { const items=g.items.filter(it=>feat[fmap[it.r]||it.r]!==false); return items.length?`<div class="nav-group-label">${g.group}</div>`+items.map(it=>`<div class="nav-item ${it.r===MC.state.route?'active':''}" data-route="${it.r}">${icon(it.icon)}<span>${it.label}</span>${it.badge?`<span class="nav-badge ${it.badgeRed?'red':''}">${it.badge}</span>`:''}</div>`).join(''):''; }).join(''); })()}
       </nav>
       <div class="side-foot">
         ${showCampus ? `<div class="campus-pill" id="campusPill">${icon('mapPin')}<span id="campusLbl">${MC.state.campus}</span>${icon('chevronDown')}</div>` : `<div class="campus-pill" id="switchRole">${icon('refresh')}<span>Switch role</span></div>`}
@@ -278,7 +275,7 @@ MC.renderApp = function () {
       <main class="content" id="content"></main>
     </div>
   </div>
-  <button class="ai-fab" id="aiFab" title="${aiTitle()}">${icon('sparkles')}</button>
+  ${(window.MC&&MC.config&&MC.config.get('features',{}).ai_assistant===false)?'':`<button class="ai-fab" id="aiFab" title="${aiTitle()}">${icon('sparkles')}</button>`}
   <div class="watermark">Miriam College HRIS — Interactive Prototype · ${role.portal}</div>`;
 
   const closeMobileNav = () => $('.app')?.classList.remove('nav-open');
@@ -287,7 +284,7 @@ MC.renderApp = function () {
   $('#navBackdrop').addEventListener('click', closeMobileNav);
   $('#btnNotif').addEventListener('click', () => MC.openNotifications());
   $('#btnHelp').addEventListener('click', () => MC.openAI());
-  $('#aiFab').addEventListener('click', () => MC.openAI());
+  $('#aiFab')?.addEventListener('click', () => MC.openAI());
   $('#userChip').addEventListener('click', () => MC.openUserMenu());
   if ($('#campusPill')) $('#campusPill').addEventListener('click', () => MC.openCampusMenu());
   if ($('#switchRole')) $('#switchRole').addEventListener('click', () => MC.renderLogin());

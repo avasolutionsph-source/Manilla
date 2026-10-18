@@ -174,7 +174,7 @@
         const btn = document.getElementById('loginBtn');
         const prev = btn ? btn.innerHTML : null;
         if (btn) { btn.disabled = true; btn.textContent = 'Loading live data…'; }
-        try { await MC.dataReady; } catch (e) {}
+        try { await Promise.all([MC.dataReady, MC.configReady]); } catch (e) {}
         if (btn) { btn.disabled = false; if (prev != null) btn.innerHTML = prev; }
       }
       return original.apply(this, arguments);

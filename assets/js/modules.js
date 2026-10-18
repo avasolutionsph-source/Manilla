@@ -112,7 +112,7 @@
   /* ========================================================
      RECRUITMENT & ATS
      ======================================================== */
-  const STAGES = ['Applied','Screening','Interview','Assessment','Offer'];
+  const STAGES = () => (window.MC&&MC.config?MC.config.get('recruitment.stages',['Applied','Screening','Interview','Assessment','Offer']):['Applied','Screening','Interview','Assessment','Offer']);
   MC.recruitTab = 'pipeline';
   MC.pages.recruitment = function () {
     return {
@@ -142,7 +142,7 @@
   function pipelineHTML(){
     return `<div class="mb">${aiBanner(`<b>AI screening active.</b> 89 resumes parsed and ranked by competency match this period. Top candidate per role is highlighted. Rankings assist — the hiring committee decides.`)}</div>
     <div class="kanban" id="kanban">
-      ${STAGES.map(s=>{ const list = DB.applicants.filter(a=>a.stage===s);
+      ${STAGES().map(s=>{ const list = DB.applicants.filter(a=>a.stage===s);
         return `<div class="kcol" data-stage="${s}"><div class="kcol-head"><span>${s}</span><span class="cnt">${list.length}</span></div>
         <div class="kcol-body" data-stage="${s}">${list.map(a=>applicantCard(a)).join('')||`<div style="text-align:center;color:var(--ink-3);font-size:12px;padding:16px 0">Drop here</div>`}</div></div>`;
       }).join('')}
@@ -312,7 +312,7 @@
       <div class="hint mt" style="text-align:center">${icon('shield')} AI ranking is advisory — selection decisions require authorized human approval.</div>
     </div>`});
   };
-  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const i=STAGES.indexOf(a.stage); if(i<STAGES.length-1){a.stage=STAGES[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage='Offer';toast('Candidate at offer stage','ok');} if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:a.stage}).catch(e=>toast('Sync failed','warn',String(e.message||e))); closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
+  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const S=STAGES(); const i=S.indexOf(a.stage); if(i<S.length-1){a.stage=S[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage='Offer';toast('Candidate at offer stage','ok');} if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:a.stage}).catch(e=>toast('Sync failed','warn',String(e.message||e))); closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
   MC.scheduleInterview = function(id){ const a=DB.applicants.find(x=>x.id===id); closeDrawer();
     modal({title:'Schedule interview',sub:a.name+' · '+a.role,body:`
       <div class="form-row"><div class="field"><label>Date</label><input class="input" type="date" value="2026-10-20"></div><div class="field"><label>Time</label><input class="input" type="time" value="10:00"></div></div>
@@ -323,7 +323,7 @@
   };
   MC.makeOffer = function(id){ const a=DB.applicants.find(x=>x.id===id); closeDrawer();
     modal({title:'Generate job offer',sub:a.name,body:`
-      <div class="form-row"><div class="field"><label>Position</label><input class="input" value="${a.role}"></div><div class="field"><label>Employment type</label><select class="select"><option>Probationary</option><option>Regular</option><option>Contractual</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Position</label><input class="input" value="${a.role}"></div><div class="field"><label>Employment type</label><select class="select">${(window.MC&&MC.config?MC.config.get('recruitment.offerEmploymentTypes',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
       <div class="form-row"><div class="field"><label>Monthly rate</label><input class="input" value="₱45,000"></div><div class="field"><label>Start date</label><input class="input" type="date" value="2026-11-03"></div></div>
       <div class="alertbar info mt">${icon('info')} Offer will route through the approval workflow: Dept. Head → HR → VP for Administration.</div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.confirmOffer('${a.id}')">${icon('send')} Generate & route</button>`});
@@ -354,8 +354,8 @@
       <div class="field"><label>Job title <span class="req">*</span></label><input class="input" id="jobTitle" placeholder="e.g. Assistant Professor — Biology"></div>
       <div class="form-row"><div class="field"><label>Department</label><select class="select" id="jobDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
         <div class="field"><label>Campus</label><select class="select" id="jobCampus">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="field"><label>Employment type</label><select class="select" id="jobType"><option>Full-time Faculty</option><option>Full-time Staff</option><option>Contractual</option><option>Part-time</option></select></div>
-        <div class="field"><label>Channels</label><select class="select" id="jobChannel"><option>Internal + External</option><option>Internal only</option><option>External only</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Employment type</label><select class="select" id="jobType">${(window.MC&&MC.config?MC.config.get('recruitment.jobTypes',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div>
+        <div class="field"><label>Channels</label><select class="select" id="jobChannel">${(window.MC&&MC.config?MC.config.get('recruitment.channels',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
       <div class="field"><label>Job description</label>
         <div class="row" style="gap:8px;margin-bottom:6px"><button class="btn sm" id="genJD">${icon('sparkles')} Generate with AI</button><span class="hint">AI drafts a description from the title & department.</span></div>
         <textarea class="input" id="jdText" style="min-height:120px" placeholder="Describe responsibilities, qualifications, competencies…"></textarea></div>`,
@@ -382,7 +382,7 @@
       <div class="form-row"><div class="field"><label>Position requested</label><input class="input" id="reqPos" placeholder="Position title"></div>
         <div class="field"><label>Number of positions</label><input class="input" type="number" value="1"></div></div>
       <div class="form-row"><div class="field"><label>Department</label><select class="select" id="reqDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
-        <div class="field"><label>Justification</label><select class="select"><option>Replacement</option><option>New / Additional</option><option>Backfill</option></select></div></div>
+        <div class="field"><label>Justification</label><select class="select">${(window.MC&&MC.config?MC.config.get('recruitment.requisitionJustifications',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
       <div class="field"><label>Reason / notes</label><textarea class="input" placeholder="Business justification…"></textarea></div>
       <div class="alertbar info">${icon('info')} Approval route: Dept. Head → HR → Finance (budget check) → VP for Administration.</div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="reqSubmit">${icon('send')} Submit for approval</button>`});
@@ -526,7 +526,7 @@
       <div class="alertbar ai mb">${icon('sparkles')}<div style="flex:1">Hiring from a candidate? Data transfers from Recruitment automatically — no re-encoding.</div></div>
       <div class="form-row"><div class="field"><label>Full name <span class="req">*</span></label><input class="input" id="empName" placeholder="First M. Last"></div><div class="field"><label>Employee ID</label><input class="input" id="empNewId" value="${nextId}" readonly></div></div>
       <div class="form-row"><div class="field"><label>Position</label><input class="input" id="empPos"></div><div class="field"><label>Department</label><select class="select" id="empDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="field"><label>Campus</label><select class="select" id="empCampus">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label>Employment type</label><select class="select" id="empType"><option>Probationary</option><option>Regular</option><option>Faculty</option><option>Contractual</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Campus</label><select class="select" id="empCampus">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label>Employment type</label><select class="select" id="empType">${(window.MC&&MC.config?MC.config.get('employment.types',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
       <div class="form-row"><div class="field"><label>Date hired</label><input class="input" id="empHired" type="date" value="2026-11-03"></div><div class="field"><label>Email</label><input class="input" id="empEmail" placeholder="name@mc.edu.ph"></div></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="empSubmit">${icon('check')} Create & provision</button>`});
     const btn=document.getElementById('empSubmit'); if(btn) btn.addEventListener('click',MC.submitEmployee);
@@ -610,7 +610,7 @@
   function kv2(k,v){ return `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
   MC.fileApplication = function(){
     modal({title:'File an application',sub:'Routed to your supervisor for approval',body:`
-      <div class="field"><label>Application type <span class="req">*</span></label><select class="select" id="appType"><option>Leave — Vacation</option><option>Leave — Sick</option><option>Official Business</option><option>Overtime</option><option>Work Hours Offsetting</option></select></div>
+      <div class="field"><label>Application type <span class="req">*</span></label><select class="select" id="appType">${(window.MC&&MC.config?MC.config.get('leave.types',[]):[]).map(lt=>`<option value="${lt.name}">${lt.name}</option>`).join('')}</select></div>
       <div class="form-row"><div class="field"><label>From</label><input class="input" type="date" id="appFrom" value="2026-10-20"></div><div class="field"><label>To</label><input class="input" type="date" id="appTo" value="2026-10-20"></div></div>
       <div class="field"><label>Reason</label><textarea class="input" id="appReason" placeholder="Provide details…"></textarea></div>
       <div class="card card-pad" style="background:var(--surface-2)"><div class="between"><span class="muted" style="font-size:12.5px">Leave balance (VL)</span><b>9.5 days</b></div><div class="prog mt-sm"><i style="width:63%"></i></div></div>
@@ -619,14 +619,14 @@
     const btn=document.getElementById('appSubmit'); if(btn) btn.addEventListener('click',MC.submitApplication);
   };
   MC.submitApplication = function(){
-    const typeMap={'Leave — Vacation':'Vacation Leave','Leave — Sick':'Sick Leave','Official Business':'Official Business','Overtime':'Overtime','Work Hours Offsetting':'Work Hours Offset'};
     const v=id=>((document.getElementById(id)||{}).value||'');
-    const type=typeMap[v('appType')]||'Vacation Leave';
+    const type=v('appType')||'Vacation Leave';
+    const lt=((window.MC&&MC.config?MC.config.get('leave.types',[]):[]).find(x=>x.name===type))||{};
     const from=v('appFrom')||new Date().toISOString().slice(0,10);
     const to=v('appTo')||from;
     const reason=v('appReason').trim();
     const p=MC.persona(); const empId=DB.empById(p.id)?p.id:null;
-    const prefix=type==='Official Business'?'OB':type==='Overtime'?'OT':type==='Work Hours Offset'?'WO':'LV';
+    const prefix=lt.code||'LV';
     const _aseq=DB.applications.filter(a=>String(a.id).indexOf(prefix+"-")===0).map(a=>parseInt(String(a.id).replace(/\D/g,""),10)||0); const id=`${prefix}-${String(Math.max(0,..._aseq)+1).padStart(4,"0")}`;
     let days=Math.round((new Date(to)-new Date(from))/86400000)+1; if(!(days>=0))days=1;
     const isHours=(type==='Overtime'||type==='Work Hours Offset');
@@ -855,9 +855,9 @@
   }
   MC.openReview = function(empId){
     const e=DB.empById(empId); const r=DB.reviews.find(x=>x.emp===empId)||{cycle:'H2 2026',score:4.0};
-    const cnames=['Job knowledge & competence','Quality & timeliness of work','Collaboration & communication','Initiative & innovation','Mission & values alignment'];
+    const cnames=(window.MC&&MC.config?MC.config.get('performance.competencies',['Job knowledge & competence','Quality & timeliness of work','Collaboration & communication','Initiative & innovation','Mission & values alignment']):[]);
     const coffs=[0.4,-0.3,0.2,-0.2,-0.1];
-    const crit=cnames.map((n,i)=>[n, Math.max(1,Math.min(5,Math.round((r.score+coffs[i])*10)/10))]);
+    const crit=cnames.map((n,i)=>[n, Math.max(1,Math.min(5,Math.round((r.score+(coffs[i]||0))*10)/10))]);
     modal({title:'Performance evaluation',sub:`${e.name} · ${r.cycle}`,size:'lg',body:`
       <div class="grid g-2 mb"><div class="card card-pad"><div class="muted" style="font-size:11.5px">Overall score</div><div style="font-size:26px;font-weight:800;color:var(--brand)">${r.score}<span style="font-size:14px;color:var(--ink-3)"> / 5.0</span></div><div class="mt-sm">${badge(r.rating||'Satisfactory')}</div></div>
         <div class="card card-pad"><div class="muted" style="font-size:11.5px">Goals</div><div style="font-size:26px;font-weight:800">${r.met||4}<span style="font-size:14px;color:var(--ink-3)"> / ${r.goals||5} met</span></div><div class="prog mt-sm"><i style="width:${(r.met||4)/(r.goals||5)*100}%;background:var(--brand-2)"></i></div></div></div>
@@ -925,7 +925,7 @@
   MC.initiateSeparation = function(){
     modal({title:'Initiate separation',sub:'Triggers clearance, asset verification & final pay',body:`
       <div class="field"><label>Employee</label><select class="select" id="sepEmp">${DB.employees.map(e=>`<option>${e.name}</option>`).join('')}</select></div>
-      <div class="form-row"><div class="field"><label>Separation type</label><select class="select" id="sepType"><option>Resignation</option><option>End of Contract</option><option>Retirement</option><option>Termination</option></select></div>
+      <div class="form-row"><div class="field"><label>Separation type</label><select class="select" id="sepType">${(window.MC&&MC.config?MC.config.get('offboarding.types',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div>
         <div class="field"><label>Last working day</label><input class="input" id="sepLast" type="date" value="2026-11-30"></div></div>
       <div class="field"><label>Reason / remarks</label><textarea class="input" id="sepReason"></textarea></div>
       <div class="alertbar warn">${icon('alertTriangle')}<div style="flex:1">This will auto-trigger: clearance workflow, asset accountability, benefits & payroll validation, exit interview, records archiving.</div></div>`,
