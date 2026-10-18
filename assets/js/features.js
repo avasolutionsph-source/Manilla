@@ -439,6 +439,18 @@
     }
   };
 
+  // Generate a real statutory remittance file (CSV) from live payroll data.
+  MC.genRemittance = function (agency, form) {
+    const items = (DB.payrollRun.items || []);
+    const colMap = { SSS: 'sss', PhilHealth: 'phic', 'Pag-IBIG': 'hdmf', BIR: 'tax' };
+    const col = colMap[agency];
+    let rows;
+    if (col) rows = [['Employee ID', 'Name', 'TIN', agency + ' Amount'], ...items.map((it) => { const e = DB.empById(it.id) || {}; return [it.id, e.name || '', e.tin || '', it[col] || 0]; })];
+    else rows = [['Employee ID', 'Name', 'Gross', '13th Month (est.)'], ...items.map((it) => { const e = DB.empById(it.id) || {}; return [it.id, e.name || '', it.gross || 0, Math.round(it.basic || 0)]; })];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    UI.download((agency + '_' + form).replace(/[^\w]+/g, '_') + '.csv', csv);
+    toast('Generated', 'ok', agency + ' · ' + form + ' — CSV downloaded');
+  };
   MC.pages.compliance = function () {
     const toneOf = s => s==='Filed'?'green':s==='Ready'?'amber':'blue';
     return { title:'Compliance Center', crumb:'Operations · Compliance',
@@ -457,7 +469,7 @@
       </div>
       <div class="card"><div class="card-head"><div><h3>Upcoming deadlines</h3><div class="sub">Next 30 days</div></div></div>
         <div class="table-wrap"><table class="tbl"><thead><tr><th>Agency</th><th>Report</th><th>Due date</th><th>Status</th><th></th></tr></thead><tbody>
-          ${[['SSS','R-3 Contribution','Oct 31, 2026','Ready'],['PhilHealth','RF-1 Remittance','Oct 31, 2026','Ready'],['Pag-IBIG','MCRF Remittance','Oct 31, 2026','Ready'],['BIR','Form 1601-C','Nov 10, 2026','Scheduled'],['DOLE','13th Month Report','Dec 15, 2026','Scheduled']].map(([ag,r,due,st])=>`<tr><td><b>${ag}</b></td><td>${r}</td><td class="muted">${due}</td><td>${badge(st,toneOf(st))}</td><td><button class="btn sm primary" onclick="UI.toast('Generated','ok','${ag} · ${r}')">Generate</button></td></tr>`).join('')}
+          ${[['SSS','R-3 Contribution','Oct 31, 2026','Ready'],['PhilHealth','RF-1 Remittance','Oct 31, 2026','Ready'],['Pag-IBIG','MCRF Remittance','Oct 31, 2026','Ready'],['BIR','Form 1601-C','Nov 10, 2026','Scheduled'],['DOLE','13th Month Report','Dec 15, 2026','Scheduled']].map(([ag,r,due,st])=>`<tr><td><b>${ag}</b></td><td>${r}</td><td class="muted">${due}</td><td>${badge(st,toneOf(st))}</td><td><button class="btn sm primary" onclick="MC.genRemittance('${ag}','${r}')">Generate</button></td></tr>`).join('')}
         </tbody></table></div></div>`,
     };
   };

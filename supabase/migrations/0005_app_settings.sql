@@ -20,3 +20,7 @@ create policy app_settings_ins on public.app_settings for insert to anon, authen
 
 drop policy if exists app_settings_upd on public.app_settings;
 create policy app_settings_upd on public.app_settings for update to anon, authenticated using (true) with check (true);
+
+-- DELETE allowed here (config only) so "Reset to default" can remove an override row.
+drop policy if exists app_settings_del on public.app_settings;
+create policy app_settings_del on public.app_settings for delete to anon, authenticated using (true);

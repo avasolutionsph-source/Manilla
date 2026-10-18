@@ -257,19 +257,34 @@ MC.CONFIG_DEFAULTS = {
     keys() { return Object.keys(MC.CONFIG_DEFAULTS); },
     /** Set an override and persist it (upsert into app_settings). */
     async set(key, value) {
-      store[key] = clone(value);
+      const had = Object.prototype.hasOwnProperty.call(store, key); const prev = store[key];
+      store[key] = clone(value); // optimistic
       if (CFG.USE_SUPABASE && URL && KEY && MC.dataSource === 'supabase') {
-        const r = await fetch(`${URL}/rest/v1/app_settings?on_conflict=key`, {
-          method: 'POST',
-          headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify({ key, value }),
-        });
-        if (!r.ok) throw new Error(`config set ${key} → ${r.status}`);
+        try {
+          const r = await fetch(`${URL}/rest/v1/app_settings?on_conflict=key`, {
+            method: 'POST',
+            headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ key, value }),
+          });
+          if (!r.ok) throw new Error(`config set ${key} → ${r.status}`);
+        } catch (e) { if (had) store[key] = prev; else delete store[key]; throw e; } // roll back
       }
       return true;
     },
-    /** Revert a key to its shipped default (persisted). */
-    async reset(key) { return MC.config.set(key, MC.CONFIG_DEFAULTS[key]); },
+    /** Revert a key to its shipped default — removes the override row. */
+    async reset(key) {
+      const had = Object.prototype.hasOwnProperty.call(store, key); const prev = store[key];
+      delete store[key];
+      if (CFG.USE_SUPABASE && URL && KEY && MC.dataSource === 'supabase') {
+        try {
+          const r = await fetch(`${URL}/rest/v1/app_settings?key=eq.${encodeURIComponent(key)}`, {
+            method: 'DELETE', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY },
+          });
+          if (!r.ok && r.status !== 404) throw new Error(`config reset ${key} → ${r.status}`);
+        } catch (e) { if (had) store[key] = prev; throw e; }
+      }
+      return true;
+    },
   };
 
   // Load overrides at boot (parallel with the data layer).

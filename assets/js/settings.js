@@ -5,8 +5,9 @@
    MC.config. Overrides this prototype's original settings page.
    ============================================================ */
 (function () {
-  const { icon, toast, badge, modal, closeModal } = UI;
+  const { icon, toast, modal, closeModal } = UI;
   const G = window.MC;
+  const badge = G.badge; // badge lives on MC, not UI
 
   const TABS = [
     ['org', 'Organization'], ['features', 'Feature Flags'], ['recruitment', 'Recruitment'],
@@ -232,7 +233,7 @@
     const savet = e.target.closest('[data-savetable]');
     if (savet) { const k = savet.dataset.savetable; persist(k, readTable(k), 'Saved'); return; }
     const savekv = e.target.closest('[data-savekv]');
-    if (savekv) { const k = savekv.dataset.savekv; persist(k, readKv(root), 'Saved'); return; }
+    if (savekv) { const k = savekv.dataset.savekv; persist(k, readKv(savekv.closest('.card') || root), 'Saved'); return; }
     const mx = e.target.closest('[data-mx]');
     if (mx) { const role = mx.dataset.role, i = +mx.dataset.i; const m = G.config.get('rbac.matrix', {}); m[role] = m[role] || []; m[role][i] = ((m[role][i] || 0) + 1) % 3; persist('rbac.matrix', m, 'Permission updated'); return; }
     if (e.target.closest('[data-savesched]')) { const g = +document.getElementById('tkGrace').value || 0, ws = document.getElementById('tkStart').value, we = document.getElementById('tkEnd').value; Promise.all([G.config.set('timekeeping.graceMinutes', g), G.config.set('timekeeping.workStart', ws), G.config.set('timekeeping.workEnd', we)]).then(() => { toast('Schedule saved', 'ok'); paint(); }).catch((err) => toast('Save failed', 'warn', String(err.message || err))); return; }
