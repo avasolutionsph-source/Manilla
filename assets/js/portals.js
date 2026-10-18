@@ -212,7 +212,7 @@
       html:`
       <div class="grid mb" style="grid-template-columns:1fr 1fr 1fr">
         <div class="bal-card"><div class="lab">Current cycle score</div><div class="big" style="color:var(--brand)">${r.score}<span class="unit"> / 5.0</span></div><div class="mt-sm">${badge(r.rating)}</div></div>
-        <div class="bal-card"><div class="lab">Goals met</div><div class="big">${r.met}<span class="unit"> / ${r.goals}</span></div><div class="prog mt-sm"><i style="width:${r.met/r.goals*100}%;background:var(--green)"></i></div></div>
+        <div class="bal-card"><div class="lab">Goals met</div><div class="big">${r.met}<span class="unit"> / ${r.goals}</span></div><div class="prog mt-sm"><i style="width:${r.met/r.goals*100}%;background:var(--brand-2)"></i></div></div>
         <div class="bal-card"><div class="lab">Status</div><div style="margin-top:10px">${badge(r.status)}</div><div class="muted" style="font-size:12px;margin-top:8px">Cycle: H2 2026</div></div>
       </div>
       <div class="grid mb" style="grid-template-columns:1.3fr 1fr">
@@ -433,11 +433,25 @@
   MC.applyJob = function(id){
     const j = DB.jobs.find(x=>x.id===id);
     modal({title:'Apply for this position',sub:j.title,body:`
-      <div class="form-row"><div class="field"><label>Full name</label><input class="input" value="Diane Rose F. Castro"></div><div class="field"><label>Email</label><input class="input" value="diane.castro@email.com"></div></div>
+      <div class="form-row"><div class="field"><label>Full name</label><input class="input" id="ajName" value="Diane Rose F. Castro"></div><div class="field"><label>Email</label><input class="input" id="ajEmail" value="diane.castro@email.com"></div></div>
       <div class="field"><label>Mobile number</label><input class="input" value="0917 000 5543"></div>
       <div class="field"><label>Résumé / CV</label><div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('fileText')}</div><div style="flex:1;font-size:12.5px"><b>Diane_Castro_Resume.pdf</b><div class="muted" style="font-size:11px">On file · from your profile</div></div><span class="ai-flag">${icon('sparkles')} AI will screen</span></div></div>
       <div class="field"><label>Cover message (optional)</label><textarea class="input" placeholder="Tell us why you're a great fit…"></textarea></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.APPLIED.push('${id}');UI.closeModal();UI.toast('Application submitted','ok','We will email you about next steps');MC.go('app_applications')">${icon('send')} Submit application</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.submitApplyJob('${id}')">${icon('send')} Submit application</button>`});
+  };
+  MC.submitApplyJob = function(id){
+    const v=i=>((document.getElementById(i)||{}).value||'').trim();
+    const j=DB.jobs.find(x=>x.id===id); if(!j)return;
+    const name=v('ajName')||'Applicant'; const email=v('ajEmail');
+    const seqs=DB.applicants.map(a=>parseInt(String(a.id).split('-').pop(),10)||0);
+    const aid='A-'+String(Math.max(0,...seqs)+1); const today=new Date().toISOString().slice(0,10);
+    DB.applicants.unshift({ id:aid, name, role:j.title, stage:'Applied', match:null, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, aiNotes:null, color:DB.colorFor(name), initials:DB.initials(name) });
+    j.applicants=(j.applicants||0)+1; MC.APPLIED.push(id);
+    closeModal(); toast('Application submitted','ok','We will email you about next steps'); MC.go('app_applications');
+    if(window.MC&&MC.db&&MC.db.live()){
+      MC.db.insert('applicants',{ id:aid, name, role:j.title, stage:'Applied', match:null, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, ai_notes:null }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
+      MC.db.update('jobs','id',id,{applicants:j.applicants}).catch(()=>{});
+    }
   };
 
   MC.pages.app_applications = function () {
@@ -473,7 +487,7 @@
         </div>
         <div class="alertbar info mt-lg">${icon('info')} Accepting begins onboarding — your records transfer to your 201 File automatically, with no re-encoding.</div>
         <div class="row mt-lg wrap" style="gap:10px">
-          <button class="btn gold" style="flex:1;justify-content:center;padding:12px" onclick="MC.acceptOffer()">${icon('check')} Accept offer</button>
+          <button class="btn primary" style="flex:1;justify-content:center;padding:12px" onclick="MC.acceptOffer()">${icon('check')} Accept offer</button>
           <button class="btn" onclick="UI.toast('Message sent','info','HR will get back to you')">${icon('message')} Ask a question</button>
           <button class="btn danger" onclick="UI.toast('Noted','warn','Offer declined')">Decline</button>
         </div>

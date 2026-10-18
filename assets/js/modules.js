@@ -307,7 +307,7 @@
       <div class="row mt-lg wrap" style="gap:8px">
         <button class="btn primary" style="flex:1" onclick="MC.advanceStage('${a.id}')">${icon('arrowRight')} Advance stage</button>
         <button class="btn" onclick="MC.scheduleInterview('${a.id}')">${icon('calendar')} Interview</button>
-        <button class="btn gold" onclick="MC.makeOffer('${a.id}')">${icon('fileText')} Offer</button>
+        <button class="btn" onclick="MC.makeOffer('${a.id}')">${icon('fileText')} Offer</button>
       </div>
       <div class="hint mt" style="text-align:center">${icon('shield')} AI ranking is advisory — selection decisions require authorized human approval.</div>
     </div>`});
@@ -357,7 +357,7 @@
       <div class="form-row"><div class="field"><label>Employment type</label><select class="select" id="jobType"><option>Full-time Faculty</option><option>Full-time Staff</option><option>Contractual</option><option>Part-time</option></select></div>
         <div class="field"><label>Channels</label><select class="select" id="jobChannel"><option>Internal + External</option><option>Internal only</option><option>External only</option></select></div></div>
       <div class="field"><label>Job description</label>
-        <div class="row" style="gap:8px;margin-bottom:6px"><button class="btn sm gold" id="genJD">${icon('sparkles')} Generate with AI</button><span class="hint">AI drafts a description from the title & department.</span></div>
+        <div class="row" style="gap:8px;margin-bottom:6px"><button class="btn sm" id="genJD">${icon('sparkles')} Generate with AI</button><span class="hint">AI drafts a description from the title & department.</span></div>
         <textarea class="input" id="jdText" style="min-height:120px" placeholder="Describe responsibilities, qualifications, competencies…"></textarea></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="jobSubmit">${icon('send')} Post vacancy</button>`});
     $('#jobSubmit')?.addEventListener('click',MC.submitJob);
@@ -369,7 +369,7 @@
   MC.submitJob = function(){
     const v=id=>((document.getElementById(id)||{}).value||'').trim();
     const title=v('jobTitle'); if(!title){ toast('Title required','warn','Enter a job title'); return; }
-    const seqs=DB.jobs.map(j=>parseInt(String(j.id).replace(/\D/g,'').slice(-3),10)||0);
+    const seqs=DB.jobs.map(j=>parseInt(String(j.id).split('-').pop(),10)||0);
     const id='REQ-2026-'+String(Math.max(0,...seqs)+1).padStart(3,'0');
     const today=new Date().toISOString().slice(0,10);
     const rec={ id, title, dept:v('jobDept'), campus:v('jobCampus'), type:v('jobType'), status:'Open', posted:today, applicants:0, stage:'Screening', channel:v('jobChannel'), requester:MC.persona().name };
@@ -391,7 +391,7 @@
   MC.submitRequisition = function(){
     const v=id=>((document.getElementById(id)||{}).value||'').trim();
     const title=v('reqPos'); if(!title){ toast('Position required','warn','Enter the position requested'); return; }
-    const seqs=DB.jobs.map(j=>parseInt(String(j.id).replace(/\D/g,'').slice(-3),10)||0);
+    const seqs=DB.jobs.map(j=>parseInt(String(j.id).split('-').pop(),10)||0);
     const id='REQ-2026-'+String(Math.max(0,...seqs)+1).padStart(3,'0');
     const rec={ id, title, dept:v('reqDept'), campus:'Quezon City', type:'—', status:'For Approval', posted:'—', applicants:0, stage:'Requisition', channel:'—', requester:MC.persona().name };
     DB.jobs.unshift(rec); closeModal(); toast('Requisition submitted','ok',`${id} · routed for approval`);
@@ -534,7 +534,7 @@
   MC.submitEmployee = function(){
     const v=id=>((document.getElementById(id)||{}).value||'').trim();
     const name=v('empName'); if(!name){ toast('Name required','warn','Enter the full name'); return; }
-    const id=v('empNewId')||('MC-'+String(Date.now()).slice(-4));
+    const id=v('empNewId')||('MC-'+String(Math.max(0,...DB.employees.map(e=>parseInt(String(e.id).replace(/\D/g,''),10)||0))+1).padStart(4,'0'));
     const rec={ id, name, position:v('empPos')||'—', dept:v('empDept'), campus:v('empCampus'), type:v('empType'), status:'Active',
       email:v('empEmail'), phone:'', hired:v('empHired'), sg:'—', rank:'—', supervisor:'—', birth:null, civil:'—', gender:'—',
       tin:'', sss:'', pagibig:'', philhealth:'', contractEnds:null, color:DB.colorFor(name), initials:DB.initials(name) };
@@ -627,7 +627,7 @@
     const reason=v('appReason').trim();
     const p=MC.persona(); const empId=DB.empById(p.id)?p.id:null;
     const prefix=type==='Official Business'?'OB':type==='Overtime'?'OT':type==='Work Hours Offset'?'WO':'LV';
-    const id=`${prefix}-${String(Date.now()).slice(-4)}`;
+    const _aseq=DB.applications.filter(a=>String(a.id).indexOf(prefix+"-")===0).map(a=>parseInt(String(a.id).replace(/\D/g,""),10)||0); const id=`${prefix}-${String(Math.max(0,..._aseq)+1).padStart(4,"0")}`;
     let days=Math.round((new Date(to)-new Date(from))/86400000)+1; if(!(days>=0))days=1;
     const isHours=(type==='Overtime'||type==='Work Hours Offset');
     const filed=new Date().toISOString().slice(0,10);
@@ -776,7 +776,7 @@
     modal({title:'Educational benefit — not yet enrolled',sub:'Enrollment closes Nov 15',body:`<div class="ai-analysis">
       <div class="between"><span class="hd">${icon('sparkles')} Eligible but not enrolled</span>${badge('114 dependents','amber')}</div>
       <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Of <b>260 eligible dependents</b>, 146 are enrolled and <b>114 have not completed enrollment</b>. By employee unit:</p>
-      <div class="mt-sm">${units.map(u=>`<div class="cb-row"><div class="cb-top"><span class="cl">${u[0]}</span><span class="cw">${u[1]} dependents</span><span class="cs" style="color:var(--ink-2)">${Math.round(u[1]/114*100)}%</span></div><div class="cb-bar"><i style="width:${u[1]/62*100}%;background:var(--amber)"></i></div></div>`).join('')}</div>
+      <div class="mt-sm">${units.map(u=>`<div class="cb-row"><div class="cb-top"><span class="cl">${u[0]}</span><span class="cw">${u[1]} dependents</span><span class="cs" style="color:var(--ink-2)">${Math.round(u[1]/114*100)}%</span></div><div class="cb-bar"><i style="width:${u[1]/62*100}%;background:var(--brand)"></i></div></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Targeted reminders are drafted for HR review before sending.</div></div>`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Reminders queued','ok','114 reminders drafted for HR review')">${icon('send')} Draft reminders</button>`});
   };
@@ -860,13 +860,14 @@
     const crit=cnames.map((n,i)=>[n, Math.max(1,Math.min(5,Math.round((r.score+coffs[i])*10)/10))]);
     modal({title:'Performance evaluation',sub:`${e.name} · ${r.cycle}`,size:'lg',body:`
       <div class="grid g-2 mb"><div class="card card-pad"><div class="muted" style="font-size:11.5px">Overall score</div><div style="font-size:26px;font-weight:800;color:var(--brand)">${r.score}<span style="font-size:14px;color:var(--ink-3)"> / 5.0</span></div><div class="mt-sm">${badge(r.rating||'Satisfactory')}</div></div>
-        <div class="card card-pad"><div class="muted" style="font-size:11.5px">Goals</div><div style="font-size:26px;font-weight:800">${r.met||4}<span style="font-size:14px;color:var(--ink-3)"> / ${r.goals||5} met</span></div><div class="prog mt-sm"><i style="width:${(r.met||4)/(r.goals||5)*100}%;background:var(--green)"></i></div></div></div>
+        <div class="card card-pad"><div class="muted" style="font-size:11.5px">Goals</div><div style="font-size:26px;font-weight:800">${r.met||4}<span style="font-size:14px;color:var(--ink-3)"> / ${r.goals||5} met</span></div><div class="prog mt-sm"><i style="width:${(r.met||4)/(r.goals||5)*100}%;background:var(--brand-2)"></i></div></div></div>
       <div class="between" style="margin-bottom:12px"><h4 style="font-size:14px">Competency ratings</h4><span class="muted" style="font-size:11.5px">Overall <b>${r.score}</b> = average of the 5 ratings</span></div>
       <div class="ai-analysis" style="border:none;padding:0;background:none">${crit.map(([c,v])=>{const col=v>=4.5?'var(--green)':v>=3.5?'var(--brand-2)':'var(--amber)';return `<div class="cb-row"><div class="cb-top"><span class="cl">${c}</span><span class="cs" style="color:${col}">${v.toFixed(1)}<span style="color:var(--ink-3);font-weight:400"> / 5</span></span></div><div class="cb-bar"><i style="width:${v/5*100}%;background:${col}"></i></div></div>`;}).join('')}</div>
       <div class="field mt"><label>Individual Development Plan (IDP)</label><textarea class="input">Focus on research output and completion of doctoral units. Nominate for Research & Publication Workshop. Target 2 publications within AY.</textarea></div>
       <div class="alertbar info">${icon('info')} Outstanding/VS ratings may trigger configurable merit increases in Payroll — subject to approval.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="UI.toast('Saved as draft','info')">Save draft</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Evaluation submitted','ok','Routed for employee acknowledgment')">${icon('send')} Submit & route</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="UI.toast('Saved as draft','info')">Save draft</button><button class="btn primary" onclick="MC.submitReview('${empId}')">${icon('send')} Submit & route</button>`});
   };
+  MC.submitReview = function(empId){ const r=DB.reviews.find(x=>x.emp===empId); if(r)r.status='Submitted'; closeModal(); toast('Evaluation submitted','ok','Routed for employee acknowledgment'); if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('performance_reviews','emp_id',empId,{status:'Submitted'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.computeRanking = function(){
     MC.perfTab='ranking'; MC.go('performance');
     setTimeout(()=>toast('Faculty ranking computed','ok','2 faculty promotion-eligible'),200);
@@ -876,8 +877,9 @@
       ${rankBreakdownHTML(empId)}
       <div class="card card-pad mt-lg">${kv('Current rank',f.current)}${kv('Recommended rank',f.next)}${kv('Salary impact','+₱6,500 / mo (auto-staged)')}</div>
       <div class="field mt-lg"><label>Approval route</label><div class="row wrap" style="gap:7px"><span class="chip">Dean</span>${icon('arrowRight')}<span class="chip">Faculty Ranking Committee</span>${icon('arrowRight')}<span class="chip">VP Academic Affairs</span></div></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Promotion routed for approval','ok','${e.name} · pending committee review')">${icon('send')} Route for approval</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.submitPromotion('${empId}')">${icon('send')} Route for approval</button>`});
   };
+  MC.submitPromotion = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId); if(f)f.eligible=false; closeModal(); toast('Promotion routed for approval','ok',`${e?e.name:empId} · pending committee review`); if(MC.perfTab){MC.perfTab='ranking';} if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('faculty_ranking','emp_id',empId,{eligible:false}).catch(er=>toast('Sync failed','warn',String(er.message||er))); };
 
   /* ========================================================
      OFFBOARDING & CLEARANCE
@@ -945,7 +947,7 @@
     modal({title:'Exit-interview themes',sub:'Last 12 months · aggregated',body:`<div class="ai-analysis">
       <div class="between"><span class="hd">${icon('sparkles')} Why people leave</span>${badge('Advisory','amber')}</div>
       <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Themes are aggregated from structured exit interviews. Attrition is concentrated in <b>contractual faculty</b> near end-of-contract — no single manager cluster detected.</p>
-      <div class="mt-sm">${themes.map(t=>`<div class="cb-row"><div class="cb-top"><span class="cl">${t[0]}</span><span class="cw">${t[2]}</span><span class="cs" style="color:var(--brand)">${t[1]}%</span></div><div class="cb-bar"><i style="width:${t[1]}%;background:var(--violet)"></i></div></div>`).join('')}</div>
+      <div class="mt-sm">${themes.map(t=>`<div class="cb-row"><div class="cb-top"><span class="cl">${t[0]}</span><span class="cw">${t[2]}</span><span class="cs" style="color:var(--brand)">${t[1]}%</span></div><div class="cb-bar"><i style="width:${t[1]}%;background:var(--brand)"></i></div></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Recommendation: review contractual faculty load & comp for AY 2026–2027 — subject to leadership approval.</div></div>`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Retention review opened','ok','Routed to HR & academic leadership')">${icon('check')} Open retention review</button>`});
   };

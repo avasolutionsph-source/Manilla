@@ -26,11 +26,11 @@
 
       <div class="kpi6 mb">
         ${miniKpi('412','Total workforce','navy')}
-        ${miniKpi('6.2%','Attrition (YoY)','green')}
-        ${miniKpi('₱236.3M','Annual cost','blue')}
-        ${miniKpi('4.1/5','Engagement','violet')}
-        ${miniKpi('28d','Time-to-fill','amber')}
-        ${miniKpi('0.75','Faculty : staff','teal')}
+        ${miniKpi('6.2%','Attrition (YoY)','navy')}
+        ${miniKpi('₱236.3M','Annual cost','navy')}
+        ${miniKpi('4.1/5','Engagement','navy')}
+        ${miniKpi('28d','Time-to-fill','navy')}
+        ${miniKpi('0.75','Faculty : staff','navy')}
       </div>
 
       <div class="grid mb" style="grid-template-columns:1.5fr 1fr">
@@ -40,8 +40,8 @@
         <div class="card"><div class="card-head"><h3>Succession readiness</h3><button class="btn sm" onclick="MC.execSuccession()">${icon('eye')} Details</button></div><div class="card-pad" style="text-align:center">
           ${charts.ring(78,{size:150,color:'var(--brand-2)',label:'roles covered'})}
           <div class="row" style="justify-content:center;gap:18px;margin-top:14px">
-            <div><div style="font-size:20px;font-weight:800;color:var(--green)">7</div><div class="muted" style="font-size:11.5px">Ready now</div></div>
-            <div><div style="font-size:20px;font-weight:800;color:var(--amber)">2</div><div class="muted" style="font-size:11.5px">At risk</div></div>
+            <div><div style="font-size:20px;font-weight:800;color:var(--brand)">7</div><div class="muted" style="font-size:11.5px">Ready now</div></div>
+            <div><div style="font-size:20px;font-weight:800;color:var(--brand)">2</div><div class="muted" style="font-size:11.5px">At risk</div></div>
             <div><div style="font-size:20px;font-weight:800;color:var(--brand)">11</div><div class="muted" style="font-size:11.5px">In pipeline</div></div>
           </div></div></div>
       </div>
@@ -87,9 +87,9 @@
     modal({title:'Succession readiness — detail',sub:'18 critical roles tracked',body:`<div class="ai-analysis">
       <div class="between"><span class="hd">${icon('sparkles')} Coverage</span>${badge('78% covered','blue')}</div>
       <div class="row mt" style="justify-content:space-between;max-width:340px">
-        <div><b style="font-size:20px;color:var(--green)">7</b> <span class="muted" style="font-size:12px">ready now</span></div>
+        <div><b style="font-size:20px;color:var(--brand)">7</b> <span class="muted" style="font-size:12px">ready now</span></div>
         <div><b style="font-size:20px;color:var(--brand)">11</b> <span class="muted" style="font-size:12px">in pipeline</span></div>
-        <div><b style="font-size:20px;color:var(--amber)">2</b> <span class="muted" style="font-size:12px">at risk</span></div></div>
+        <div><b style="font-size:20px;color:var(--brand)">2</b> <span class="muted" style="font-size:12px">at risk</span></div></div>
       <div class="muted" style="font-size:11.5px;margin-top:16px">Roles needing attention:</div>
       <div class="mt-sm">${roles.map(r=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('alertTriangle')}</div><div style="flex:1"><b style="font-size:13px">${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></div><span class="ai-flag" style="white-space:normal">${r[2]}</span></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Advisory · appointments require Board / VP approval.</div></div>`,
