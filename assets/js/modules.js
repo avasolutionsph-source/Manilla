@@ -751,7 +751,7 @@
         <tbody>${DB.benefits.map(b=>`<tr><td><b>${b.name}</b></td><td>${badge(b.type,benTone(b.type))}</td>
           <td><div class="row" style="gap:8px"><div class="prog" style="width:70px"><i style="width:${b.enrolled/b.eligible*100}%"></i></div><span class="muted" style="font-size:12px">${b.enrolled}/${b.eligible}</span></div></td>
           <td class="muted">${b.employer}</td><td class="muted">${b.renews}</td><td>${badge(b.status)}</td>
-          <td><button class="btn sm" onclick="UI.toast('Program details','info','${b.name}')">${icon('eye')}</button></td></tr>`).join('')}</tbody></table></div>
+          <td><button class="btn sm" onclick="MC.benefitDetails('${b.name}')">${icon('eye')}</button></td></tr>`).join('')}</tbody></table></div>
       </div>
 
       <div class="card"><div class="card-head"><div><h3>Recent claims</h3><div class="sub">Electronic submission & approval</div></div></div>
@@ -768,8 +768,23 @@
   function claimsTable(){
     return `<thead><tr><th>Ref</th><th>Employee</th><th>Benefit</th><th>Type</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>${DB.claims.map(c=>`<tr><td class="muted">${c.id}</td><td><b style="font-size:12.8px">${c.emp}</b></td><td>${c.benefit}</td><td class="muted">${c.type}</td><td><b>${c.amount}</b></td><td>${badge(c.status)}</td>
-      <td>${c.status==='Pending'?`<button class="btn sm primary" onclick="MC.decideClaim('${c.id}')">Approve</button>`:c.status==='Processing'?`<button class="btn sm" onclick="UI.toast('Claim in processing','info','${c.id}')">Track</button>`:`<button class="btn sm" onclick="UI.toast('Claim ${c.id}','info','${c.status}')">View</button>`}</td></tr>`).join('')}</tbody>`;
+      <td>${c.status==='Pending'?`<button class="btn sm primary" onclick="MC.decideClaim('${c.id}')">Approve</button>`:c.status==='Processing'?`<button class="btn sm" onclick="MC.viewClaim('${c.id}')">Track</button>`:`<button class="btn sm" onclick="MC.viewClaim('${c.id}')">View</button>`}</td></tr>`).join('')}</tbody>`;
   }
+  MC.benefitDetails = function(name){
+    const b=DB.benefits.find(x=>x.name===name); if(!b)return;
+    const pct=b.eligible?Math.round(b.enrolled/b.eligible*100):0;
+    modal({title:b.name,sub:b.type+' benefit',body:`
+      ${kv2('Status',badge(b.status))}${kv2('Enrolled',b.enrolled+' of '+b.eligible+' eligible ('+pct+'%)')}
+      <div class="prog mt-sm mb"><i style="width:${pct}%"></i></div>
+      ${kv2('Employer share',b.employer)}${kv2('Renews',b.renews)}`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
+  MC.viewClaim = function(id){
+    const c=DB.claims.find(x=>x.id===id); if(!c)return;
+    modal({title:'Claim '+c.id,sub:c.emp,body:`
+      ${kv2('Status',badge(c.status))}${kv2('Benefit',c.benefit)}${kv2('Claim type',c.type)}${kv2('Amount',c.amount)}${kv2('Filed',fmt.date(c.filed))}`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
   MC.decideClaim = function(id){ const c=DB.claims.find(x=>x.id===id); c.status='Approved'; toast('Claim approved','ok',`${id} · ${c.emp}`); const t=$('#bClaimsTbl'); if(t)t.innerHTML=claimsTable(); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('claims','id',id,{status:'Approved'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.benefitGap = function(){
     const units=[['Basic Education Unit',62],['Higher Education Unit',38],['Shared services & admin',14]];
@@ -841,7 +856,7 @@
         </div>
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:10px">${icon('book')}<b>Learning records</b></div>
           ${kv('Trainings completed (YTD)','147')}${kv('Certifications tracked','89')}${kv('Avg. training ROI','3.2×')}${kv('Pending nominations','14')}
-          <button class="btn block mt-lg" onclick="UI.toast('L&D report','info','Training effectiveness report')">${icon('chart')} Training effectiveness report</button>
+          <button class="btn block mt-lg" onclick="MC.genLDReport()">${icon('chart')} Training effectiveness report</button>
         </div>
       </div>`;
     }
@@ -1104,6 +1119,12 @@
     const body=`<h2>Certificate of Employment</h2><p>This certifies that the bearer was employed by Miriam College. This certificate is issued upon request for whatever legal purpose it may serve.</p>
       <h2>Clearance Certificate</h2><p>All accountabilities have been settled and the employee is hereby cleared from all obligations, subject to completion of the clearance process across all offices.</p>`;
     if(MC.saveHtmlFile) MC.saveHtmlFile('Separation_Documents.html','Separation Documents',body); else toast('Documents generated','ok');
+  };
+  MC.genLDReport = function(){
+    const rows=[['Employee','Cycle','Score','Rating','IDP','Goals Met'],...DB.reviews.map(r=>{const e=DB.empById(r.emp)||{};return [e.name||r.emp,r.cycle,r.score,r.rating,r.idp?'Yes':'No',(r.met||0)+'/'+(r.goals||0)];})];
+    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    download('LD_Training_Effectiveness.csv',csv);
+    toast('L&D report generated','ok','Training effectiveness \u00b7 CSV downloaded');
   };
   MC.exportCSV = function(type){
     let rows=[['Export'],['Generated',new Date().toISOString()]];
