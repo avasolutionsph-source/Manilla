@@ -240,7 +240,7 @@
     const v=id=>((document.getElementById(id)||{}).value||'').trim();
     const seqs=DB.claims.map(c=>parseInt(String(c.id).replace(/\D/g,''),10)||0);
     const id='CLM-'+String(Math.max(0,...seqs)+1).padStart(4,'0');
-    const p=MC.persona(); const amount=v('clAmount')||'₱0.00'; const today=new Date().toISOString().slice(0,10);
+    const p=MC.persona(); const amount=v('clAmount'); if(!amount){ toast('Amount required','warn','Enter the claim amount'); return; } const today=new Date().toISOString().slice(0,10);
     DB.claims.unshift({ id, emp:p.name, benefit:v('clBenefit'), amount, type:v('clType'), status:'Pending', filed:today });
     closeModal(); toast('Claim filed','ok',`${id} · routed to Benefits`);
     if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('claims',{ id, emp_name:p.name, benefit:v('clBenefit'), amount, claim_type:v('clType'), status:'Pending', filed:today }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
@@ -483,14 +483,15 @@
   MC.submitApplyJob = function(id){
     const v=i=>((document.getElementById(i)||{}).value||'').trim();
     const j=DB.jobs.find(x=>x.id===id); if(!j)return;
-    const name=v('ajName')||'Applicant'; const email=v('ajEmail');
+    const name=v('ajName'); const email=v('ajEmail');
+    if(!name||!/.+@.+\..+/.test(email)){ toast('Check your details','warn','Full name and a valid email are required'); return; }
     const seqs=DB.applicants.map(a=>parseInt(String(a.id).split('-').pop(),10)||0);
     const aid='A-'+String(Math.max(0,...seqs)+1); const today=new Date().toISOString().slice(0,10);
-    DB.applicants.unshift({ id:aid, name, role:j.title, stage:'Applied', match:null, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, aiNotes:null, color:DB.colorFor(name), initials:DB.initials(name) });
+    DB.applicants.unshift({ id:aid, name, role:j.title, stage:'Applied', match:70, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, aiNotes:'Resume received - pending AI screening.', color:DB.colorFor(name), initials:DB.initials(name) });
     j.applicants=(j.applicants||0)+1; MC.APPLIED.push(id);
     closeModal(); toast('Application submitted','ok','We will email you about next steps'); MC.go('app_applications');
     if(window.MC&&MC.db&&MC.db.live()){
-      MC.db.insert('applicants',{ id:aid, name, role:j.title, stage:'Applied', match:null, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, ai_notes:null }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
+      MC.db.insert('applicants',{ id:aid, name, role:j.title, stage:'Applied', match:70, exp:'—', edu:'—', applied:today, source:'MC Careers Site', email, ai_notes:'Resume received - pending AI screening.' }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
       MC.db.update('jobs','id',id,{applicants:j.applicants}).catch(()=>{});
     }
   };
@@ -530,7 +531,7 @@
         <div class="row mt-lg wrap" style="gap:10px">
           <button class="btn primary" style="flex:1;justify-content:center;padding:12px" onclick="MC.acceptOffer()">${icon('check')} Accept offer</button>
           <button class="btn" onclick="UI.toast('Message sent','info','HR will get back to you')">${icon('message')} Ask a question</button>
-          <button class="btn danger" onclick="UI.toast('Noted','warn','Offer declined')">Decline</button>
+          <button class="btn danger" onclick="MC.confirm('Decline this offer?','This action cannot be undone.',MC.declineOffer,'Decline offer')">Decline</button>
         </div>
       </div>`,
     };
@@ -544,6 +545,7 @@
       </div>`,
       foot:`<button class="btn" data-close>Not yet</button><button class="btn primary" onclick="MC.doAcceptOffer()">${icon('check')} Confirm acceptance</button>`});
   };
+  MC.declineOffer = function(){ const a=DB.applicants.find(x=>x.id==='A-5543'); if(a)a.stage='Declined'; toast('Offer declined','warn','We have recorded your decision'); if(MC.state.route==='app_offers')MC.go('app_offers'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id','A-5543',{stage:'Declined'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.doAcceptOffer = function(){
     const a=DB.applicants.find(x=>x.id==='A-5543'); if(a)a.stage='Hired';
     if(MC.startOnboarding)MC.startOnboarding();

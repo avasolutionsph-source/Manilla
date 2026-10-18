@@ -80,7 +80,7 @@ window.UI = (function () {
   function icon(name, cls) {
     const p = I[name] || I.info;
     // default 18x18 as a safety net; any CSS width/height rule overrides it
-    return `<svg class="${cls||''}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+    return `<svg class="${cls||''}" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
   }
 
   /* ---------- Formatters ---------- */

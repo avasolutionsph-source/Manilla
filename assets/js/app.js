@@ -40,6 +40,7 @@ MC.empCell = function (id) {
 
 MC.seal = `<span class="seal-badge"><img src="assets/Images/Miriam%20Logo.png" alt="Miriam College seal"></span>`;
 const SEAL = MC.seal;
+MC.confirm = function(title, msg, onYes, yesLabel){ modal({title, body:`<p style="font-size:13.5px;color:var(--ink-2);margin:0;line-height:1.6">${msg}</p>`, foot:`<button class="btn" data-close>Cancel</button><button class="btn danger" id="cfmYes">${yesLabel||'Confirm'}</button>`}); const y=document.getElementById('cfmYes'); if(y) y.addEventListener('click', ()=>{ closeModal(); onYes&&onYes(); }); };
 
 /* ============================================================
    ROLE CONFIGURATION — who sees what
@@ -252,7 +253,7 @@ MC.renderApp = function () {
     <aside class="sidebar">
       <div class="brand">${SEAL}<div><b>Miriam College</b><span>${role.portal}</span></div></div>
       <nav class="nav" id="nav">
-        ${(() => { const feat=(window.MC&&MC.config&&MC.config.get)?MC.config.get('features',{}):{}; const fmap={command_center:'command',budget_sim:'budget'}; return role.nav.map(g => { const items=g.items.filter(it=>feat[fmap[it.r]||it.r]!==false); return items.length?`<div class="nav-group-label">${g.group}</div>`+items.map(it=>`<div class="nav-item ${it.r===MC.state.route?'active':''}" data-route="${it.r}">${icon(it.icon)}<span>${it.label}</span>${it.badge?`<span class="nav-badge ${it.badgeRed?'red':''}">${it.badge}</span>`:''}</div>`).join(''):''; }).join(''); })()}
+        ${(() => { const feat=(window.MC&&MC.config&&MC.config.get)?MC.config.get('features',{}):{}; const fmap={command_center:'command',budget_sim:'budget'}; return role.nav.map(g => { const items=g.items.filter(it=>feat[fmap[it.r]||it.r]!==false); return items.length?`<div class="nav-group-label">${g.group}</div>`+items.map(it=>`<div class="nav-item ${it.r===MC.state.route?'active':''}" data-route="${it.r}" role="button" tabindex="0">${icon(it.icon)}<span>${it.label}</span>${it.badge?`<span class="nav-badge ${it.badgeRed?'red':''}">${it.badge}</span>`:''}</div>`).join(''):''; }).join(''); })()}
       </nav>
       <div class="side-foot">
         ${showCampus ? `<div class="campus-pill" id="campusPill">${icon('mapPin')}<span id="campusLbl">${MC.state.campus}</span>${icon('chevronDown')}</div>` : `<div class="campus-pill" id="switchRole">${icon('refresh')}<span>Switch role</span></div>`}
@@ -265,7 +266,7 @@ MC.renderApp = function () {
         <div id="headTitle"></div>
         <div class="spacer"></div>
         <div class="search" id="searchBox">${icon('search')}<input placeholder="${searchPlaceholder()}" id="globalSearch"><kbd>Ctrl K</kbd></div>
-        <button class="icon-btn" id="btnNotif">${icon('bell')}<span class="dot"></span></button>
+        <button class="icon-btn" id="btnNotif" title="Notifications" aria-label="Notifications">${icon('bell')}${(MC.notifSets&&(MC.notifSets[MC.state.role]||[]).some(x=>x.unread))?'<span class="dot"></span>':''}</button>
         ${(window.MC&&MC.config&&MC.config.get('features',{}).ai_assistant===false)?'':`<button class="icon-btn" id="btnHelp" title="AI Assistant">${icon('sparkles')}</button>`}
         <div class="userchip" id="userChip">
           <div class="ava" style="background:${p.color}">${p.initials}</div>
@@ -281,6 +282,7 @@ MC.renderApp = function () {
 
   const closeMobileNav = () => $('.app')?.classList.remove('nav-open');
   $('#nav').addEventListener('click', e => { const it = e.target.closest('[data-route]'); if (it) { MC.go(it.dataset.route); closeMobileNav(); } });
+  $('#nav').addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { const it = e.target.closest('[data-route]'); if (it) { e.preventDefault(); MC.go(it.dataset.route); closeMobileNav(); } } });
   $('#btnMenu').addEventListener('click', () => $('.app').classList.toggle('nav-open'));
   $('#navBackdrop').addEventListener('click', closeMobileNav);
   $('#btnNotif').addEventListener('click', () => MC.openNotifications());

@@ -32,7 +32,7 @@
       title: 'Dashboard', crumb: 'Overview · '+MC.state.campus,
       html: `
       <div class="page-head"><div><div class="t">Good day, ${roleFirst()}</div><div class="d">Here's what's happening across Miriam College HR today — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}.</div></div>
-        <div class="row wrap"><button class="btn" id="dExport">${icon('download')} Export</button><button class="btn primary" id="dQuick">${icon('plus')} Quick action</button></div></div>
+        <div class="row wrap"><button class="btn" id="dExport">${icon('download')} Export CSV</button><button class="btn primary" id="dQuick">${icon('plus')} Quick action</button></div></div>
 
       <div class="grid g-4 mb">
         ${stat({icon:'users',color:'navy',value:fmt.num(active),label:'Active employees',trend:'+2.4%',trendDir:'up',onclick:"MC.go('employees')"})}
@@ -668,7 +668,7 @@
             <td><button class="btn sm" onclick="MC.viewPayslip('${it.id}')">Payslip</button></td></tr>`;}).join('')}</tbody></table></div>
         </div>
         <div class="card"><div class="card-head"><h3>Deduction breakdown</h3></div><div class="card-pad">
-          ${charts.donut([{label:'W/holding Tax',value:46,color:'var(--brand)'},{label:'SSS',value:18,color:'var(--brand-2)'},{label:'PhilHealth',value:14,color:'var(--teal)'},{label:'Pag-IBIG',value:6,color:'var(--gold)'},{label:'Loans',value:16,color:'var(--violet)'}],{center:fmt.peso(p.deductions).replace('₱','₱'),centerSub:'total'})}
+          ${charts.donut([{label:'W/holding Tax',value:46,color:'var(--brand)'},{label:'SSS',value:18,color:'var(--brand-2)'},{label:'PhilHealth',value:14,color:'var(--teal)'},{label:'Pag-IBIG',value:6,color:'var(--gold)'},{label:'Loans',value:16,color:'var(--violet)'}],{center:fmt.peso(p.deductions),centerSub:'total'})}
           ${charts.legend([{label:'Tax',color:'var(--brand)'},{label:'SSS',color:'var(--brand-2)'},{label:'PhilHealth',color:'var(--teal)'},{label:'Pag-IBIG',color:'var(--gold)'},{label:'Loans',color:'var(--violet)'}])}
         </div></div>
       </div>
@@ -706,7 +706,7 @@
       <div class="grid g-2 mt-lg"><div><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Earnings</div>${kv('Basic pay',fmt.peso2(it.basic))}${kv('Allowances',fmt.peso2(it.allow))}${kv('Overtime',fmt.peso2(it.ot))}<div class="kv"><span class="k"><b>Gross</b></span><span class="v"><b>${fmt.peso2(it.gross)}</b></span></div></div>
         <div><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Deductions</div>${kv('Withholding tax',fmt.peso2(it.tax))}${kv('SSS',fmt.peso2(it.sss))}${kv('PhilHealth',fmt.peso2(it.phic))}${kv('Pag-IBIG',fmt.peso2(it.hdmf))}${kv('Loans',fmt.peso2(it.loans))}<div class="kv"><span class="k"><b>Total</b></span><span class="v"><b>${fmt.peso2(ded)}</b></span></div></div></div>
       <div class="card card-pad mt-lg" style="background:var(--navy-900);color:#fff"><div class="between"><span style="color:#c7d2ef">NET PAY</span><b style="font-size:22px;color:#fff">${fmt.peso2(it.net)}</b></div></div>`,
-      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="MC.savePayslip('${id}')">${icon('download')} Download PDF</button>`});
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="MC.savePayslip('${id}')">${icon('download')} Download</button>`});
   };
   MC.postJE = function(){
     const dr=9847200, cr=1108558+915000+386786+7436856;
@@ -882,7 +882,7 @@
       <div class="alertbar info">${icon('info')} Outstanding/VS ratings may trigger configurable merit increases in Payroll — subject to approval.</div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="MC.saveReviewDraft('${empId}')">Save draft</button><button class="btn primary" onclick="MC.submitReview('${empId}')">${icon('send')} Submit & route</button>`});
   };
-  MC.submitReview = function(empId){ const r=DB.reviews.find(x=>x.emp===empId); if(r)r.status='Submitted'; closeModal(); toast('Evaluation submitted','ok','Routed for employee acknowledgment'); if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('performance_reviews','emp_id',empId,{status:'Submitted'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
+  MC.submitReview = function(empId){ let r=DB.reviews.find(x=>x.emp===empId); const isNew=!r; if(isNew){r={emp:empId,cycle:'H2 2026',score:4.0,rating:'Satisfactory',status:'Submitted',idp:false,goals:5,met:4};DB.reviews.push(r);} else {r.status='Submitted';} closeModal(); toast('Evaluation submitted','ok','Routed for employee acknowledgment'); if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()){ (isNew?MC.db.insert('performance_reviews',{emp_id:empId,cycle:r.cycle,score:r.score,rating:r.rating,status:'Submitted',idp:false,goals:r.goals,met:r.met}):MC.db.update('performance_reviews','emp_id',empId,{status:'Submitted'})).catch(e=>toast('Sync failed','warn',String(e.message||e))); } };
   MC.computeRanking = function(){
     MC.perfTab='ranking'; MC.go('performance');
     setTimeout(()=>toast('Faculty ranking computed','ok','2 faculty promotion-eligible'),200);
@@ -1099,9 +1099,10 @@
     if(window.MC&&MC.db&&MC.db.live()) MC.db.update('employees','id',empId,{contract_ends:e.contractEnds}).catch(err=>toast('Sync failed','warn',String(err.message||err)));
   };
   MC.saveReviewDraft = function(empId){
-    const r=DB.reviews.find(x=>x.emp===empId); if(r)r.status='In Progress';
+    let r=DB.reviews.find(x=>x.emp===empId); const isNew=!r;
+    if(isNew){r={emp:empId,cycle:'H2 2026',score:4.0,rating:'Satisfactory',status:'In Progress',idp:false,goals:5,met:4};DB.reviews.push(r);} else {r.status='In Progress';}
     toast('Saved as draft','ok','Evaluation saved \u2014 not yet routed');
-    if(window.MC&&MC.db&&MC.db.live()) MC.db.update('performance_reviews','emp_id',empId,{status:'In Progress'}).catch(e=>toast('Sync failed','warn',String(e.message||e)));
+    if(window.MC&&MC.db&&MC.db.live()){ (isNew?MC.db.insert('performance_reviews',{emp_id:empId,cycle:r.cycle,score:r.score,rating:r.rating,status:'In Progress',idp:false,goals:r.goals,met:r.met}):MC.db.update('performance_reviews','emp_id',empId,{status:'In Progress'})).catch(e=>toast('Sync failed','warn',String(e.message||e))); }
   };
   MC.gen2316Batch = function(){
     const rows=[['Employee ID','Name','TIN','Annual Gross','Annual Tax Withheld'],...DB.payrollRun.items.map(it=>{const e=DB.empById(it.id)||{};return [it.id,e.name||'',e.tin||'',(it.gross||0)*24,(it.tax||0)*24];})];
@@ -1127,11 +1128,12 @@
     toast('L&D report generated','ok','Training effectiveness \u00b7 CSV downloaded');
   };
   MC.exportCSV = function(type){
-    let rows=[['Export'],['Generated',new Date().toISOString()]];
+    let rows=[['Metric','Value'],['Total employees',DB.employees.length],['Open positions',DB.jobs.filter(j=>j.status==='Open').length],['Pending approvals',DB.applications.filter(a=>a.status==='Pending').length],['Payroll net (period)',DB.payrollRun.net]];
     if(type==='employees'){ rows=[['ID','Name','Position','Department','Campus','Type','Status','Date Hired'],...DB.employees.map(e=>[e.id,e.name,e.position,e.dept,e.campus,e.type,e.status,e.hired])]; }
     else if(type==='attendance'){ rows=[['ID','Name','Time In','Method','Status'],...DB.attendanceToday.map(a=>{const e=DB.empById(a.id);return [a.id,e?e.name:'',a.timeIn,a.mode,a.status];})]; }
     else if(type==='statutory'){ rows=[['ID','Name','Tax','SSS','PhilHealth','Pag-IBIG'],...DB.payrollRun.items.map(it=>{const e=DB.empById(it.id);return [it.id,e?e.name:'',it.tax,it.sss,it.phic,it.hdmf];})]; }
     else if(type==='audit'){ rows=[['Timestamp','Actor','Action','Target','IP'],...DB.auditTrail.map(a=>[a.ts,a.actor,a.action,a.target,a.ip])]; }
+    else if(type==='compliance'){ rows=[['ID','Name','Tax','SSS','PhilHealth','Pag-IBIG'],...DB.payrollRun.items.map(it=>{const e=DB.empById(it.id);return [it.id,e?e.name:'',it.tax,it.sss,it.phic,it.hdmf];})]; }
     const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
     download(`mc-hris-${type}-${Date.now()}.csv`,csv);
     toast('Export ready','ok',`${type}.csv downloaded`);
