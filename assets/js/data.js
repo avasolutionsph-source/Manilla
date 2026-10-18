@@ -2,7 +2,8 @@
    Miriam College HRIS — Mock data (demo only)
    ============================================================ */
 window.DB = (function () {
-  const avatarColors = ['#1d3473','#274597','#0f8f9e','#6d4bd4','#c07d16','#15966b','#c7384a','#2563c9','#9a4f16','#4a4f73'];
+  // Apple-minimal: avatars are one neutral navy family — initials are the differentiator.
+  const avatarColors = ['#1d3473','#17295f','#274597','#284a9a','#1a2f63','#223a7a','#102050','#2a4f9e'];
   const colorFor = (s) => avatarColors[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % avatarColors.length];
   const initials = (n) => n.split(' ').filter(w=>w[0]&&/[A-Za-z]/.test(w[0])).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 

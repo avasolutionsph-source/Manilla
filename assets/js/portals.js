@@ -61,11 +61,11 @@
   };
   function ssTile(ic,color,title,sub,route){
     return `<div class="ss-tile" onclick="MC.go('${route}')"><span class="arr">${icon('arrowRight')}</span>
-      <div class="ic" style="background:var(--${color}-bg);color:var(--${color})">${icon(ic)}</div>
+      <div class="ic" style="background:var(--surface-2);color:var(--brand)">${icon(ic)}</div>
       <b>${title}</b><span>${sub}</span></div>`;
   }
   function announce(ic,color,title,body,time){
-    return `<div class="ann"><div class="ic" style="background:var(--${color}-bg);color:var(--${color})">${icon(ic)}</div><div style="flex:1"><b>${title}</b><p>${body}</p><div class="tm">${time}</div></div></div>`;
+    return `<div class="ann"><div class="ic" style="background:var(--surface-2);color:var(--brand)">${icon(ic)}</div><div style="flex:1"><b>${title}</b><p>${body}</p><div class="tm">${time}</div></div></div>`;
   }
 
   MC.pages.emp_profile = function () {
@@ -95,7 +95,7 @@
     };
   };
   function docRow(name,meta,color){
-    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--${color}-bg);color:var(--${color})">${icon('fileText')}</div><div style="flex:1"><b style="font-size:13px">${name}</b><div class="muted" style="font-size:11.5px">${meta}</div></div><button class="btn sm" onclick="UI.toast('Download','ok','${name}')">${icon('download')}</button></div>`;
+    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('fileText')}</div><div style="flex:1"><b style="font-size:13px">${name}</b><div class="muted" style="font-size:11.5px">${meta}</div></div><button class="btn sm" onclick="UI.toast('Download','ok','${name}')">${icon('download')}</button></div>`;
   }
 
   MC.pages.emp_attendance = function () {
@@ -128,7 +128,7 @@
     };
   };
   function myApp(ref,type,date,status,tone){
-    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--${tone}-bg);color:var(--${tone})">${icon('calendar')}</div><div style="flex:1"><b style="font-size:13px">${type}</b><div class="muted" style="font-size:11.5px">${ref} · ${date}</div></div>${badge(status)}</div>`;
+    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('calendar')}</div><div style="flex:1"><b style="font-size:13px">${type}</b><div class="muted" style="font-size:11.5px">${ref} · ${date}</div></div>${badge(status)}</div>`;
   }
 
   MC.pages.emp_payslips = function () {
@@ -152,7 +152,7 @@
           </div></div>
         <div class="card"><div class="card-head"><h3>Payslip history</h3><button class="btn sm" onclick="UI.toast('2316','ok','Your BIR 2316 is ready')">${icon('scroll')} BIR 2316</button></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Period</th><th>Gross</th><th>Net</th><th></th></tr></thead><tbody>
-            ${hist.map(([p,g,n])=>`<tr><td><b style="font-size:12.8px">${p}</b></td><td>${fmt.peso(g)}</td><td><b style="color:var(--green)">${fmt.peso(n)}</b></td><td><button class="btn sm" onclick="UI.toast('Downloaded','ok','Payslip · ${p}')">${icon('download')}</button></td></tr>`).join('')}
+            ${hist.map(([p,g,n])=>`<tr><td><b style="font-size:12.8px">${p}</b></td><td>${fmt.peso(g)}</td><td><b style="color:var(--ink)">${fmt.peso(n)}</b></td><td><button class="btn sm" onclick="UI.toast('Downloaded','ok','Payslip · ${p}')">${icon('download')}</button></td></tr>`).join('')}
           </tbody></table></div></div>
       </div>`,
     };
@@ -175,7 +175,7 @@
 
       <div class="grid g-2 mb">
         <div class="card"><div class="card-head"><h3>Enrolled programs</h3></div><div class="card-pad" style="padding-top:8px">
-          ${mine.map(([n,t,c,s])=>`<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--${c}-bg);color:var(--${c})">${icon('gift')}</div><div style="flex:1"><b style="font-size:13px">${n}</b><div class="muted" style="font-size:11.5px">${s}</div></div>${badge('Active')}</div>`).join('')}
+          ${mine.map(([n,t,c,s])=>`<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('gift')}</div><div style="flex:1"><b style="font-size:13px">${n}</b><div class="muted" style="font-size:11.5px">${s}</div></div>${badge('Active')}</div>`).join('')}
         </div></div>
         <div>
           <div class="card mb"><div class="card-head"><h3>My dependents</h3></div><div class="card-pad">${kv('Spouse','Covered · HMO + Life')}${kv('Child 1','Covered · HMO + Educational')}${kv('Child 2','Covered · HMO + Educational')}</div></div>
@@ -189,10 +189,20 @@
   };
   MC.empFileClaim = function(){
     modal({title:'File a benefit claim',body:`
-      <div class="field"><label>Benefit program</label><select class="select"><option>HMO — Maxicare</option><option>Educational Benefit</option><option>Wellness Program</option></select></div>
-      <div class="form-row"><div class="field"><label>Claim type</label><select class="select"><option>Outpatient</option><option>Dental</option><option>Reimbursement</option><option>Dependent tuition</option></select></div><div class="field"><label>Amount</label><input class="input" placeholder="₱0.00"></div></div>
+      <div class="field"><label>Benefit program</label><select class="select" id="clBenefit"><option>HMO — Maxicare</option><option>Educational Benefit</option><option>Wellness Program</option></select></div>
+      <div class="form-row"><div class="field"><label>Claim type</label><select class="select" id="clType"><option>Outpatient</option><option>Dental</option><option>Reimbursement</option><option>Dependent tuition</option></select></div><div class="field"><label>Amount</label><input class="input" id="clAmount" placeholder="₱0.00"></div></div>
       <div class="field"><label>Supporting document</label><div class="cl-row" style="padding:10px 13px"><div class="cl-check" style="background:var(--surface-2)">${icon('upload')}</div><div style="flex:1;font-size:12.5px" class="muted">Drop receipt / official document (encrypted)</div></div></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Claim filed','ok','Routed to Benefits for processing')">${icon('send')} Submit claim</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="clSubmit">${icon('send')} Submit claim</button>`});
+    $('#clSubmit')?.addEventListener('click',MC.submitClaim);
+  };
+  MC.submitClaim = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'').trim();
+    const seqs=DB.claims.map(c=>parseInt(String(c.id).replace(/\D/g,''),10)||0);
+    const id='CLM-'+String(Math.max(0,...seqs)+1).padStart(4,'0');
+    const p=MC.persona(); const amount=v('clAmount')||'₱0.00'; const today=new Date().toISOString().slice(0,10);
+    DB.claims.unshift({ id, emp:p.name, benefit:v('clBenefit'), amount, type:v('clType'), status:'Pending', filed:today });
+    closeModal(); toast('Claim filed','ok',`${id} · routed to Benefits`);
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('claims',{ id, emp_name:p.name, benefit:v('clBenefit'), amount, claim_type:v('clType'), status:'Pending', filed:today }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
   MC.pages.emp_performance = function () {
@@ -207,7 +217,7 @@
       </div>
       <div class="grid mb" style="grid-template-columns:1.3fr 1fr">
         <div class="card"><div class="card-head"><h3>Competency assessment</h3></div><div class="card-pad">
-          ${comp.map(([c,v])=>`<div class="cl-row" style="padding:11px 14px;margin-bottom:8px"><div style="flex:1;font-size:13px;font-weight:600">${c}</div><div class="row" style="gap:3px">${[1,2,3,4,5].map(n=>`<span style="color:${n<=v?'var(--gold)':'var(--line)'}">${icon('star')}</span>`).join('')}</div></div>`).join('')}
+          ${comp.map(([c,v])=>`<div class="cl-row" style="padding:11px 14px;margin-bottom:8px"><div style="flex:1;font-size:13px;font-weight:600">${c}</div><div class="row" style="gap:3px">${[1,2,3,4,5].map(n=>`<span style="color:${n<=v?'var(--brand)':'var(--line-2)'}">${icon('star')}</span>`).join('')}</div></div>`).join('')}
         </div></div>
         <div class="card"><div class="card-head"><h3>My goals & KPIs</h3></div><div class="card-pad">
           ${goal('Zero critical downtime (SLA 99.9%)',100)}${goal('Migrate 3 systems to cloud',66)}${goal('Complete AWS certification',40)}${goal('Mentor 2 junior staff',80)}
@@ -246,7 +256,7 @@
   };
   function course(t,m,status,tone){
     const action = status==='Completed'?`<button class="btn sm" onclick="UI.toast('Certificate','ok','${t}')">${icon('download')}</button>`:`<button class="btn sm primary" onclick="UI.toast('Enrolled','ok','${t}')">Enroll</button>`;
-    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--${tone}-bg);color:var(--${tone})">${icon('gradCap')}</div><div style="flex:1"><b style="font-size:13px">${t}</b><div class="muted" style="font-size:11.5px">${m}</div></div>${badge(status)}${action}</div>`;
+    return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('gradCap')}</div><div style="flex:1"><b style="font-size:13px">${t}</b><div class="muted" style="font-size:11.5px">${m}</div></div>${badge(status)}${action}</div>`;
   }
 
   /* ========================================================
@@ -279,7 +289,7 @@
       <div class="grid mb" style="grid-template-columns:1fr 1.6fr">
         <div class="card"><div class="card-head"><h3>Attendance today</h3></div><div class="card-pad">${charts.donut(statusDonut,{center:'6',centerSub:'team'})}${charts.legend(statusDonut)}</div></div>
         <div class="card"><div class="card-head"><h3>Awaiting your approval</h3><span class="badge b-red"><span class="bd"></span>${pending.length}</span></div>
-          <div style="padding:8px">${pending.map(a=>`<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--blue-bg);color:var(--blue)">${icon('calendar')}</div>
+          <div style="padding:8px">${pending.map(a=>`<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('calendar')}</div>
             <div style="flex:1"><b style="font-size:13px">${a.type} — ${a.empName}</b><div class="muted" style="font-size:11.5px">${a.id} · ${fmt.dateShort(a.from)}${a.to!==a.from?' – '+fmt.dateShort(a.to):''} · ${a.reason}</div></div>
             <div class="row" style="gap:7px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved');this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm danger" onclick="MC.decideApp('${a.id}','Rejected');this.closest('.cl-row').remove()">${icon('x')}</button></div></div>`).join('')}</div>
         </div>
@@ -322,7 +332,7 @@
         ${stat({icon:'calendar',color:'blue',value:'0',label:'On leave'})}
         ${stat({icon:'activity',color:'navy',value:'97.1%',label:'Team attendance rate'})}
       </div>
-      <div class="card mb"><div class="card-head"><div><h3>Today's team log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div></div><span class="chip" style="color:var(--green)">${icon('activity')} Live</span></div>
+      <div class="card mb"><div class="card-head"><div><h3>Today's team log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div></div><span class="chip" style="color:var(--ink-2)">${icon('activity')} Live</span></div>
         <div class="table-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Time In</th><th>Method</th><th>Status</th></tr></thead><tbody>
           ${team.map((e,i)=>`<tr><td class="cell-emp">${avatar(e)}<div><b>${e.name}</b><span>${e.dept}</span></div></td><td><b>${['07:45','07:58','08:14','07:52','07:49','08:03'][i]}</b></td><td class="muted"><span class="chip">${['Facial Biometric','Web Portal','M10 Fingerprint','Mobile (GPS)','M10 Fingerprint','Facial Biometric'][i]}</span></td><td>${i===2?badge('Late'):badge('Present')}</td></tr>`).join('')}
         </tbody></table></div></div>
@@ -343,7 +353,7 @@
       html:`
       <div class="page-head"><div><div class="t">Approvals inbox</div><div class="d">Items from your team awaiting your decision.</div></div></div>
       <div class="card"><div class="card-head"><h3>Pending your approval</h3><span class="badge b-red"><span class="bd"></span>${items.length} items</span></div>
-      <div style="padding:8px">${items.map(it=>`<div class="cl-row" style="padding:14px 16px"><div class="cl-check" style="background:var(--blue-bg);color:var(--blue)">${icon(it.ic)}</div>
+      <div style="padding:8px">${items.map(it=>`<div class="cl-row" style="padding:14px 16px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon(it.ic)}</div>
         <div style="flex:1"><b style="font-size:13.5px">${it.t}</b><div class="muted" style="font-size:11.5px">${it.kind} · ${it.ref} · ${it.sub}</div></div>
         <div class="row" style="gap:7px">${it.approve?`<button class="btn sm primary" onclick="${it.approve};this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm danger" onclick="${it.reject};this.closest('.cl-row').remove()">${icon('x')}</button>`:`<button class="btn sm primary" onclick="UI.toast('Signed off','ok','${it.ref}');this.closest('.cl-row').remove()">${icon('check')} Sign off</button>`}</div></div>`).join('')}</div></div>`,
     };
@@ -425,7 +435,7 @@
     modal({title:'Apply for this position',sub:j.title,body:`
       <div class="form-row"><div class="field"><label>Full name</label><input class="input" value="Diane Rose F. Castro"></div><div class="field"><label>Email</label><input class="input" value="diane.castro@email.com"></div></div>
       <div class="field"><label>Mobile number</label><input class="input" value="0917 000 5543"></div>
-      <div class="field"><label>Résumé / CV</label><div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--green-bg);color:var(--green)">${icon('fileText')}</div><div style="flex:1;font-size:12.5px"><b>Diane_Castro_Resume.pdf</b><div class="muted" style="font-size:11px">On file · from your profile</div></div><span class="ai-flag">${icon('sparkles')} AI will screen</span></div></div>
+      <div class="field"><label>Résumé / CV</label><div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('fileText')}</div><div style="flex:1;font-size:12.5px"><b>Diane_Castro_Resume.pdf</b><div class="muted" style="font-size:11px">On file · from your profile</div></div><span class="ai-flag">${icon('sparkles')} AI will screen</span></div></div>
       <div class="field"><label>Cover message (optional)</label><textarea class="input" placeholder="Tell us why you're a great fit…"></textarea></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.APPLIED.push('${id}');UI.closeModal();UI.toast('Application submitted','ok','We will email you about next steps');MC.go('app_applications')">${icon('send')} Submit application</button>`});
   };
@@ -456,7 +466,7 @@
       html:`
       <div class="page-head"><div><div class="t">Your Offer</div><div class="d">Review and respond to your job offer from Miriam College.</div></div></div>
       <div class="offer-card">
-        <div class="between" style="align-items:flex-start"><div class="row" style="gap:13px">${MC.seal}<div><div class="portal-tag" style="background:var(--amber-bg);color:var(--amber)">${icon('badgeCheck')} Job Offer</div><h2 style="font-size:22px;margin-top:8px">IT Support Specialist</h2><div class="muted">Information & Communications Technology Office · Quezon City</div></div></div></div>
+        <div class="between" style="align-items:flex-start"><div class="row" style="gap:13px">${MC.seal}<div><div class="portal-tag" style="background:var(--surface-2);color:var(--brand)">${icon('badgeCheck')} Job Offer</div><h2 style="font-size:22px;margin-top:8px">IT Support Specialist</h2><div class="muted">Information & Communications Technology Office · Quezon City</div></div></div></div>
         <div class="grid g-2 mt-lg">
           <div>${kv('Employment type','Probationary (6 months)')}${kv('Monthly rate','₱45,000')}${kv('Start date','November 3, 2026')}</div>
           <div>${kv('Work schedule','Mon–Fri · 8:00–17:00')}${kv('Benefits','HMO, SSS, PhilHealth, Pag-IBIG, Life')}${kv('Reporting to','Ma. Jasmin B. Velasco')}</div>
@@ -473,17 +483,23 @@
   MC.acceptOffer = function(){
     modal({title:'Accept job offer 🎉',sub:'IT Support Specialist',body:`
       <div style="text-align:center;padding:10px 0">
-        <div class="ic" style="width:64px;height:64px;border-radius:18px;background:var(--green-bg);color:var(--green);display:grid;place-items:center;margin:0 auto 16px">${icon('checkBig')}</div>
+        <div class="ic" style="width:64px;height:64px;border-radius:18px;background:var(--surface-2);color:var(--brand);display:grid;place-items:center;margin:0 auto 16px">${icon('checkBig')}</div>
         <h3 style="font-size:18px">Welcome to Miriam College!</h3>
         <p class="muted" style="font-size:13.5px;max-width:40ch;margin:10px auto 0">By accepting, you confirm your start date of <b>November 3, 2026</b>. HR will send onboarding steps to your email. Your candidate data will transfer into your employee 201 File automatically.</p>
       </div>`,
-      foot:`<button class="btn" data-close>Not yet</button><button class="btn primary" onclick="MC.startOnboarding&&MC.startOnboarding();UI.closeModal();UI.toast('Offer accepted 🎉','ok','Onboarding started — data transferred automatically')">${icon('check')} Confirm acceptance</button>`});
+      foot:`<button class="btn" data-close>Not yet</button><button class="btn primary" onclick="MC.doAcceptOffer()">${icon('check')} Confirm acceptance</button>`});
+  };
+  MC.doAcceptOffer = function(){
+    const a=DB.applicants.find(x=>x.id==='A-5543'); if(a)a.stage='Hired';
+    if(MC.startOnboarding)MC.startOnboarding();
+    closeModal(); toast('Offer accepted 🎉','ok','Onboarding started — data transferred automatically');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id','A-5543',{stage:'Hired'}).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
   MC.pages.app_profile = function () {
     return { title:'My Profile', crumb:'Careers Portal',
       html:`
-      <div class="card card-pad mb"><div class="row" style="gap:18px"><div class="ava-lg" style="background:#c07d16">DC</div>
+      <div class="card card-pad mb"><div class="row" style="gap:18px"><div class="ava-lg" style="background:var(--navy-700)">DC</div>
         <div style="flex:1"><h2 style="font-size:20px">Diane Rose F. Castro</h2><div class="muted">Applicant · IT Support Specialist</div>
           <div class="row mt-sm wrap" style="gap:7px"><span class="chip">${icon('mail')} diane.castro@email.com</span><span class="chip">${icon('phone')} 0917 000 5543</span></div></div>
         <button class="btn" onclick="UI.toast('Edit profile','info','Update your candidate profile')">${icon('edit')} Edit</button></div>
@@ -507,6 +523,6 @@
     };
   };
   function expRow(t,s,m){ return `<div style="padding:10px 0;border-bottom:1px solid var(--line-2)"><b style="font-size:13px">${t}</b><div class="muted" style="font-size:12px">${s}</div><div class="muted" style="font-size:11.5px;margin-top:2px">${m}</div></div>`; }
-  function docRow2(name,meta){ return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--green-bg);color:var(--green)">${icon('fileText')}</div><div style="flex:1"><b style="font-size:13px">${name}</b><div class="muted" style="font-size:11.5px">${meta}</div></div><button class="btn sm" onclick="UI.toast('Download','ok','${name}')">${icon('download')}</button></div>`; }
+  function docRow2(name,meta){ return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('fileText')}</div><div style="flex:1"><b style="font-size:13px">${name}</b><div class="muted" style="font-size:11.5px">${meta}</div></div><button class="btn sm" onclick="UI.toast('Download','ok','${name}')">${icon('download')}</button></div>`; }
 
 })();

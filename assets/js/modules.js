@@ -14,7 +14,7 @@
   MC.pages.dashboard = function () {
     const emps = DB.employees.filter(campusFilter);
     const active = emps.filter(e => e.status === 'Active').length;
-    const campusCounts = DB.campuses.map((c, i) => ({ label: c, value: [258,101,53][i], color: ['var(--brand)','var(--teal)','var(--gold)'][i] }));
+    const campusCounts = DB.campuses.map((c, i) => ({ label: c, value: [258,101,53][i], color: 'var(--brand)' }));
     const typeDonut = [
       { label:'Faculty', value:176, color:'var(--violet)' },
       { label:'Staff', value:158, color:'var(--brand-2)' },
@@ -82,7 +82,7 @@
           <div class="card-pad">
             ${DB.employees.filter(e=>e.contractEnds).map(e=>`<div class="cl-row clickable" style="padding:12px 14px;cursor:pointer" onclick="MC.openEmployee('${e.id}')">
               ${avatar(e)}<div style="flex:1"><b style="font-size:13px">${e.name}</b><div class="muted" style="font-size:11.5px">${e.type} · ${e.campus}</div></div>
-              <div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--amber)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days</div></div></div>`).join('')}
+              <div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--ink)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days</div></div></div>`).join('')}
             <button class="btn block mt-sm" onclick="MC.go('employees')">Review all contracts</button>
           </div>
         </div>
@@ -200,7 +200,7 @@
   function rankBreakdownHTML(empId){
     const f=DB.facultyRanking.find(x=>x.emp===empId); const parts=rankParts(f); const TH=75;
     return `<div class="ai-analysis">
-      <div class="between"><span class="hd" style="color:var(--amber)">${icon('award')} Ranking computation</span>${f.eligible?badge('Promotion-eligible','green'):badge('Not yet eligible','gray')}</div>
+      <div class="between"><span class="hd" style="color:var(--brand)">${icon('award')} Ranking computation</span>${f.eligible?badge('Promotion-eligible','green'):badge('Not yet eligible','gray')}</div>
       <div class="between mt" style="align-items:baseline"><span class="muted" style="font-size:12px">Total ranking points</span><b style="font-size:22px;color:${f.points>=TH?'var(--green)':'var(--amber)'}">${f.points}<span style="font-size:13px;color:var(--ink-3);font-weight:400"> / 100</span></b></div>
       <div class="prog" style="margin-top:6px;height:7px"><i style="width:${f.points}%;background:${f.points>=TH?'var(--green)':'var(--amber)'}"></i></div>
       <div class="muted" style="font-size:11px;margin-top:5px">Promotion threshold for ${f.next}: ${TH} points</div>
@@ -286,7 +286,7 @@
       col.addEventListener('dragleave',()=>col.classList.remove('drop-hint'));
       col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('drop-hint'); if(!dragged)return;
         const id=dragged.dataset.app; const st=col.dataset.stage; const a=DB.applicants.find(x=>x.id===id);
-        if(a&&a.stage!==st){ a.stage=st; $('#rBody',root).innerHTML=pipelineHTML(); wireRecruit(root); toast('Candidate moved',`ok`,`${a.name} → ${st}`); }
+        if(a&&a.stage!==st){ a.stage=st; $('#rBody',root).innerHTML=pipelineHTML(); wireRecruit(root); toast('Candidate moved',`ok`,`${a.name} → ${st}`); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',a.id,{stage:st}).catch(e=>toast('Sync failed','warn',String(e.message||e))); }
       });
     });
   }
@@ -312,7 +312,7 @@
       <div class="hint mt" style="text-align:center">${icon('shield')} AI ranking is advisory — selection decisions require authorized human approval.</div>
     </div>`});
   };
-  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const i=STAGES.indexOf(a.stage); if(i<STAGES.length-1){a.stage=STAGES[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage='Offer';toast('Candidate at offer stage','ok');} closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
+  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const i=STAGES.indexOf(a.stage); if(i<STAGES.length-1){a.stage=STAGES[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage='Offer';toast('Candidate at offer stage','ok');} if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:a.stage}).catch(e=>toast('Sync failed','warn',String(e.message||e))); closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
   MC.scheduleInterview = function(id){ const a=DB.applicants.find(x=>x.id===id); closeDrawer();
     modal({title:'Schedule interview',sub:a.name+' · '+a.role,body:`
       <div class="form-row"><div class="field"><label>Date</label><input class="input" type="date" value="2026-10-20"></div><div class="field"><label>Time</label><input class="input" type="time" value="10:00"></div></div>
@@ -326,8 +326,9 @@
       <div class="form-row"><div class="field"><label>Position</label><input class="input" value="${a.role}"></div><div class="field"><label>Employment type</label><select class="select"><option>Probationary</option><option>Regular</option><option>Contractual</option></select></div></div>
       <div class="form-row"><div class="field"><label>Monthly rate</label><input class="input" value="₱45,000"></div><div class="field"><label>Start date</label><input class="input" type="date" value="2026-11-03"></div></div>
       <div class="alertbar info mt">${icon('info')} Offer will route through the approval workflow: Dept. Head → HR → VP for Administration.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Job offer routed for approval','ok','${a.name} · Probationary')">${icon('send')} Generate & route</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.confirmOffer('${a.id}')">${icon('send')} Generate & route</button>`});
   };
+  MC.confirmOffer = function(id){ const a=DB.applicants.find(x=>x.id===id); if(a)a.stage='Offer'; closeModal(); toast('Job offer routed for approval','ok',`${a?a.name:id} · Probationary`); if(MC.state.route==='recruitment')MC.go('recruitment'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:'Offer'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.aiScreen = function(id){
     const a = DB.applicants.find(x=>x.id===id); if(!a) return;
     modal({title:'AI Resume Screening',sub:a.name+' · '+a.role,size:'lg',body:`
@@ -350,29 +351,52 @@
   };
   MC.newJob = function(){
     modal({title:'Post a job vacancy',sub:'Published to internal + external channels',body:`
-      <div class="field"><label>Job title <span class="req">*</span></label><input class="input" placeholder="e.g. Assistant Professor — Biology"></div>
-      <div class="form-row"><div class="field"><label>Department</label><select class="select">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
-        <div class="field"><label>Campus</label><select class="select">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="field"><label>Employment type</label><select class="select"><option>Full-time Faculty</option><option>Full-time Staff</option><option>Contractual</option><option>Part-time</option></select></div>
-        <div class="field"><label>Channels</label><select class="select"><option>Internal + External</option><option>Internal only</option><option>External only</option></select></div></div>
+      <div class="field"><label>Job title <span class="req">*</span></label><input class="input" id="jobTitle" placeholder="e.g. Assistant Professor — Biology"></div>
+      <div class="form-row"><div class="field"><label>Department</label><select class="select" id="jobDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
+        <div class="field"><label>Campus</label><select class="select" id="jobCampus">${DB.campuses.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
+      <div class="form-row"><div class="field"><label>Employment type</label><select class="select" id="jobType"><option>Full-time Faculty</option><option>Full-time Staff</option><option>Contractual</option><option>Part-time</option></select></div>
+        <div class="field"><label>Channels</label><select class="select" id="jobChannel"><option>Internal + External</option><option>Internal only</option><option>External only</option></select></div></div>
       <div class="field"><label>Job description</label>
         <div class="row" style="gap:8px;margin-bottom:6px"><button class="btn sm gold" id="genJD">${icon('sparkles')} Generate with AI</button><span class="hint">AI drafts a description from the title & department.</span></div>
         <textarea class="input" id="jdText" style="min-height:120px" placeholder="Describe responsibilities, qualifications, competencies…"></textarea></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Job posted','ok','Published to internal + external channels')">${icon('send')} Post vacancy</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="jobSubmit">${icon('send')} Post vacancy</button>`});
+    $('#jobSubmit')?.addEventListener('click',MC.submitJob);
     $('#genJD').addEventListener('click',()=>{ const b=$('#genJD'); b.innerHTML=`${icon('refresh')} Generating…`; b.disabled=true;
       setTimeout(()=>{ $('#jdText').value=`Miriam College seeks a qualified professional to join our academic community, guided by our Veritas mission.\n\nKey Responsibilities:\n• Deliver high-quality instruction aligned with the College's outcomes-based curriculum\n• Mentor and advise students; contribute to research and institutional service\n• Collaborate across departments and support co-curricular programs\n\nQualifications:\n• Master's degree in the relevant field (Doctorate an advantage)\n• Valid PRC license where applicable\n• Strong communication skills and commitment to Catholic, values-based education\n• Teaching or industry experience preferred`;
         b.innerHTML=`${icon('sparkles')} Regenerate`; b.disabled=false; toast('Job description drafted by AI','info','Review before posting'); },1100);
     });
   };
+  MC.submitJob = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'').trim();
+    const title=v('jobTitle'); if(!title){ toast('Title required','warn','Enter a job title'); return; }
+    const seqs=DB.jobs.map(j=>parseInt(String(j.id).replace(/\D/g,'').slice(-3),10)||0);
+    const id='REQ-2026-'+String(Math.max(0,...seqs)+1).padStart(3,'0');
+    const today=new Date().toISOString().slice(0,10);
+    const rec={ id, title, dept:v('jobDept'), campus:v('jobCampus'), type:v('jobType'), status:'Open', posted:today, applicants:0, stage:'Screening', channel:v('jobChannel'), requester:MC.persona().name };
+    DB.jobs.unshift(rec); closeModal(); toast('Job posted','ok',`${id} · ${title}`);
+    if(MC.state.route==='recruitment')MC.go('recruitment');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('jobs',{ id, title, dept:rec.dept, campus:rec.campus, job_type:rec.type, status:'Open', posted:today, applicants:0, stage:'Screening', channel:rec.channel, requester:rec.requester }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
+  };
   MC.newRequisition = function(){
     modal({title:'Personnel requisition',sub:'Routed for approval before posting',body:`
-      <div class="form-row"><div class="field"><label>Position requested</label><input class="input" placeholder="Position title"></div>
+      <div class="form-row"><div class="field"><label>Position requested</label><input class="input" id="reqPos" placeholder="Position title"></div>
         <div class="field"><label>Number of positions</label><input class="input" type="number" value="1"></div></div>
-      <div class="form-row"><div class="field"><label>Department</label><select class="select">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div class="form-row"><div class="field"><label>Department</label><select class="select" id="reqDept">${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
         <div class="field"><label>Justification</label><select class="select"><option>Replacement</option><option>New / Additional</option><option>Backfill</option></select></div></div>
       <div class="field"><label>Reason / notes</label><textarea class="input" placeholder="Business justification…"></textarea></div>
       <div class="alertbar info">${icon('info')} Approval route: Dept. Head → HR → Finance (budget check) → VP for Administration.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Requisition submitted','ok','Routed to Dept. Head for approval')">${icon('send')} Submit for approval</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="reqSubmit">${icon('send')} Submit for approval</button>`});
+    $('#reqSubmit')?.addEventListener('click',MC.submitRequisition);
+  };
+  MC.submitRequisition = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'').trim();
+    const title=v('reqPos'); if(!title){ toast('Position required','warn','Enter the position requested'); return; }
+    const seqs=DB.jobs.map(j=>parseInt(String(j.id).replace(/\D/g,'').slice(-3),10)||0);
+    const id='REQ-2026-'+String(Math.max(0,...seqs)+1).padStart(3,'0');
+    const rec={ id, title, dept:v('reqDept'), campus:'Quezon City', type:'—', status:'For Approval', posted:'—', applicants:0, stage:'Requisition', channel:'—', requester:MC.persona().name };
+    DB.jobs.unshift(rec); closeModal(); toast('Requisition submitted','ok',`${id} · routed for approval`);
+    if(MC.state.route==='recruitment')MC.go('recruitment');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('jobs',{ id, title, dept:rec.dept, campus:'Quezon City', job_type:'—', status:'For Approval', posted:'—', applicants:0, stage:'Requisition', channel:'—', requester:rec.requester }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
   /* ========================================================
@@ -426,7 +450,7 @@
     modal({title:'Contracts ending soon',sub:soon.length+' employees · end-of-contract triggers active',body:`
       ${soon.map(e=>`<div class="cl-row clickable" style="padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="UI.closeModal();MC.openEmployee('${e.id}')">${avatar(e)}
         <div style="flex:1"><b style="font-size:13px">${e.name}</b><div class="muted" style="font-size:11.5px">${e.position} · ${e.type} · ${e.campus}</div></div>
-        <div style="text-align:right;min-width:92px"><div style="font-size:12px;font-weight:700;color:var(--amber)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days left</div></div>
+        <div style="text-align:right;min-width:92px"><div style="font-size:12px;font-weight:700;color:var(--ink)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days left</div></div>
         <button class="btn sm" onclick="event.stopPropagation();UI.toast('Renewal initiated','ok','${e.name} · routed to Dept. Head')">${icon('refresh')} Renew</button></div>`).join('')}
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('info')} Click a row to open the full 201 file, or initiate a renewal workflow.</div>`,
       foot:`<button class="btn primary" data-close>Close</button>`});
@@ -550,7 +574,7 @@
         <div class="card"><div class="card-head"><h3>Today's status</h3></div><div class="card-pad">${charts.donut(statusDonut,{center:present+late+leave+'',centerSub:'logged'})}${charts.legend(statusDonut)}
           <div class="mt-lg"><div class="muted" style="font-size:11.5px;margin-bottom:8px">Capture methods</div>
           ${['M10 Fingerprint','Facial Biometric','Web Portal','Mobile (GPS)'].map(m=>`<div class="chip" style="margin:0 6px 6px 0">${icon('fingerprint')} ${m}</div>`).join('')}</div></div></div>
-        <div class="card"><div class="card-head"><div><h3>Live attendance log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · auto-synced</div></div><span class="chip" style="color:var(--green)">${icon('activity')} Live</span></div>
+        <div class="card"><div class="card-head"><div><h3>Live attendance log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · auto-synced</div></div><span class="chip" style="color:var(--ink-2)">${icon('activity')} Live</span></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Time In</th><th>Method</th><th>Status</th></tr></thead>
           <tbody>${DB.attendanceToday.map(a=>{const e=DB.empById(a.id);return `<tr><td class="cell-emp">${e?avatar(e):''}<div><b>${e?e.name:a.id}</b><span>${e?e.dept:''}</span></div></td><td><b>${a.timeIn}</b></td><td class="muted"><span class="chip">${a.mode}</span></td><td>${badge(a.status)}</td></tr>`;}).join('')}</tbody></table></div></div>
       </div>
@@ -576,7 +600,7 @@
         <td class="muted">${fmt.dateShort(a.from)}${a.to!==a.from?' – '+fmt.dateShort(a.to):''}</td><td>${a.days?a.days+'d':(a.hours+'h')}</td><td>${badge(a.status)}</td>
         <td>${a.status==='Pending'?`<div class="row" style="gap:6px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved')">${icon('check')}</button><button class="btn sm danger" onclick="MC.decideApp('${a.id}','Rejected')">${icon('x')}</button></div>`:`<button class="btn sm" onclick="MC.viewApp('${a.id}')">View</button>`}</td></tr>`).join('')}</tbody>`;
   }
-  function typeTone(t){ return {'Sick Leave':'red','Vacation Leave':'teal','Official Business':'blue','Overtime':'violet','Work Hours Offset':'amber'}[t]||'gray'; }
+  function typeTone(t){ return 'gray'; }
   MC.decideApp = function(id,decision){ const a=DB.applications.find(x=>x.id===id); if(!a)return; a.status=decision;
     toast(`Application ${decision.toLowerCase()}`,decision==='Approved'?'ok':'warn',`${a.id} · ${a.empName}`);
     const t=$('#tApps'); if(t) t.innerHTML=appsTable($('#tFilter button.active')?.dataset.f||'all');
@@ -640,7 +664,7 @@
           <div class="card-head"><div><h3>Payroll register</h3><div class="sub">Sample of ${p.items.length} of ${p.employees} records · ${badge(p.status)}</div></div><span class="chip">Pay date: ${fmt.date(p.pay_date)}</span></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Basic</th><th>Allow.</th><th>OT</th><th>Gross</th><th>Deductions</th><th>Net</th><th></th></tr></thead>
           <tbody>${p.items.map(it=>{const e=DB.empById(it.id);const ded=it.tax+it.sss+it.phic+it.hdmf+it.loans;return `<tr><td class="cell-emp">${e?avatar(e):''}<div><b>${e?e.name:it.id}</b><span>${it.id}</span></div></td>
-            <td>${fmt.peso(it.basic)}</td><td>${fmt.peso(it.allow)}</td><td>${it.ot?fmt.peso(it.ot):'—'}</td><td><b>${fmt.peso(it.gross)}</b></td><td class="muted">${fmt.peso(ded)}</td><td><b style="color:var(--green)">${fmt.peso(it.net)}</b></td>
+            <td>${fmt.peso(it.basic)}</td><td>${fmt.peso(it.allow)}</td><td>${it.ot?fmt.peso(it.ot):'—'}</td><td><b>${fmt.peso(it.gross)}</b></td><td class="muted">${fmt.peso(ded)}</td><td><b style="color:var(--ink)">${fmt.peso(it.net)}</b></td>
             <td><button class="btn sm" onclick="MC.viewPayslip('${it.id}')">Payslip</button></td></tr>`;}).join('')}</tbody></table></div>
         </div>
         <div class="card"><div class="card-head"><h3>Deduction breakdown</h3></div><div class="card-pad">
@@ -671,7 +695,7 @@
     $('#runGo').addEventListener('click',()=>{
       const steps=['Pulling approved timekeeping inputs…','Computing gross, OT, holiday & night differential…','Applying tax, SSS, PhilHealth, Pag-IBIG & loans…','AI validation & anomaly scan…','Reconciliation complete ✓'];
       const box=$('#runSteps'); box.innerHTML=''; $('#runGo').disabled=true; $('#runGo').innerHTML=`${icon('refresh')} Running…`;
-      let i=0; const tick=()=>{ if(i<steps.length){ box.insertAdjacentHTML('beforeend',`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--green-bg);color:var(--green)">${icon('check')}</div><div style="font-size:12.5px">${steps[i]}</div></div>`); i++; setTimeout(tick,500);} else { $('#runGo').innerHTML=`${icon('check')} Done`; setTimeout(()=>{closeModal();toast('Payroll simulation complete','ok','412 employees · ₱7.44M net · 0 critical anomalies');},600);} };
+      let i=0; const tick=()=>{ if(i<steps.length){ box.insertAdjacentHTML('beforeend',`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('check')}</div><div style="font-size:12.5px">${steps[i]}</div></div>`); i++; setTimeout(tick,500);} else { $('#runGo').innerHTML=`${icon('check')} Done`; setTimeout(()=>{closeModal();toast('Payroll simulation complete','ok','412 employees · ₱7.44M net · 0 critical anomalies');},600);} };
       tick();
     });
   };
@@ -686,7 +710,7 @@
   };
   MC.postJE = function(){
     const dr=9847200, cr=1108558+915000+386786+7436856;
-    const vcheck=(ok,t)=>`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--${ok?'green':'red'}-bg);color:var(--${ok?'green':'red'})">${icon(ok?'check':'x')}</div><div style="flex:1;font-size:12.5px;font-weight:600">${t}</div>${badge(ok?'Pass':'Fail',ok?'green':'red')}</div>`;
+    const vcheck=(ok,t)=>`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon(ok?'check':'x')}</div><div style="flex:1;font-size:12.5px;font-weight:600">${t}</div>${badge(ok?'Pass':'Fail',ok?'green':'red')}</div>`;
     modal({title:'Post journal entries to SAP',sub:'JE-2026-10-204 · Oct 1–15, 2026',size:'lg',body:`
       <div class="card mb"><div class="table-wrap"><table class="tbl"><thead><tr><th>Account</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead><tbody>
         <tr><td>Salaries & Wages Expense</td><td style="text-align:right">${fmt.peso(9847200)}</td><td style="text-align:right">—</td></tr>
@@ -697,7 +721,7 @@
         <tr style="border-top:2px solid var(--line)"><td><b>Totals</b></td><td style="text-align:right"><b>${fmt.peso(dr)}</b></td><td style="text-align:right"><b>${fmt.peso(cr)}</b></td></tr>
       </tbody></table></div></div>
       <div class="ai-analysis">
-        <div class="between"><span class="hd" style="color:var(--teal)">${icon('shield')} Pre-post validation</span>${badge(dr===cr?'Ready to post':'Blocked',dr===cr?'green':'red')}</div>
+        <div class="between"><span class="hd" style="color:var(--brand)">${icon('shield')} Pre-post validation</span>${badge(dr===cr?'Ready to post':'Blocked',dr===cr?'green':'red')}</div>
         <div class="mt">${vcheck(dr===cr,`Entry is balanced — debits ${fmt.peso(dr)} = credits ${fmt.peso(cr)}`)}${vcheck(true,'All accounts mapped to the SAP chart of accounts')}${vcheck(true,'Posting period matches the payroll cutoff (Oct 1–15, 2026)')}${vcheck(true,'No duplicate journal entry for this period')}${vcheck(true,'Secure system-to-system authentication established')}</div>
       </div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" ${dr!==cr?'disabled':''} onclick="UI.closeModal();UI.toast('Posted to SAP','ok','JE-2026-10-204 · balanced ✓')">${icon('arrowRight')} Post to SAP</button>`});
@@ -740,19 +764,19 @@
       }
     };
   };
-  function benTone(t){ return {Health:'red',Mandatory:'blue',Insurance:'violet',Educational:'teal',Retirement:'navy',Wellness:'green'}[t]||'gray'; }
+  function benTone(t){ return 'gray'; }
   function claimsTable(){
     return `<thead><tr><th>Ref</th><th>Employee</th><th>Benefit</th><th>Type</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>${DB.claims.map(c=>`<tr><td class="muted">${c.id}</td><td><b style="font-size:12.8px">${c.emp}</b></td><td>${c.benefit}</td><td class="muted">${c.type}</td><td><b>${c.amount}</b></td><td>${badge(c.status)}</td>
       <td>${c.status==='Pending'?`<button class="btn sm primary" onclick="MC.decideClaim('${c.id}')">Approve</button>`:c.status==='Processing'?`<button class="btn sm" onclick="UI.toast('Claim in processing','info','${c.id}')">Track</button>`:`<button class="btn sm" onclick="UI.toast('Claim ${c.id}','info','${c.status}')">View</button>`}</td></tr>`).join('')}</tbody>`;
   }
-  MC.decideClaim = function(id){ const c=DB.claims.find(x=>x.id===id); c.status='Approved'; toast('Claim approved','ok',`${id} · ${c.emp}`); const t=$('#bClaimsTbl'); if(t)t.innerHTML=claimsTable(); };
+  MC.decideClaim = function(id){ const c=DB.claims.find(x=>x.id===id); c.status='Approved'; toast('Claim approved','ok',`${id} · ${c.emp}`); const t=$('#bClaimsTbl'); if(t)t.innerHTML=claimsTable(); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('claims','id',id,{status:'Approved'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.benefitGap = function(){
     const units=[['Basic Education Unit',62],['Higher Education Unit',38],['Shared services & admin',14]];
     modal({title:'Educational benefit — not yet enrolled',sub:'Enrollment closes Nov 15',body:`<div class="ai-analysis">
       <div class="between"><span class="hd">${icon('sparkles')} Eligible but not enrolled</span>${badge('114 dependents','amber')}</div>
       <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Of <b>260 eligible dependents</b>, 146 are enrolled and <b>114 have not completed enrollment</b>. By employee unit:</p>
-      <div class="mt-sm">${units.map(u=>`<div class="cb-row"><div class="cb-top"><span class="cl">${u[0]}</span><span class="cw">${u[1]} dependents</span><span class="cs" style="color:var(--amber)">${Math.round(u[1]/114*100)}%</span></div><div class="cb-bar"><i style="width:${u[1]/62*100}%;background:var(--amber)"></i></div></div>`).join('')}</div>
+      <div class="mt-sm">${units.map(u=>`<div class="cb-row"><div class="cb-top"><span class="cl">${u[0]}</span><span class="cw">${u[1]} dependents</span><span class="cs" style="color:var(--ink-2)">${Math.round(u[1]/114*100)}%</span></div><div class="cb-bar"><i style="width:${u[1]/62*100}%;background:var(--amber)"></i></div></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Targeted reminders are drafted for HR review before sending.</div></div>`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Reminders queued','ok','114 reminders drafted for HR review')">${icon('send')} Draft reminders</button>`});
   };
@@ -813,7 +837,7 @@
       return `<div class="grid g-2 mb">
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:10px">${icon('gradCap')}<b>Training Needs Analysis</b></div>
           <p class="muted" style="font-size:13px;margin:0 0 12px">AI maps competency gaps from evaluations to recommended training.</p>
-          ${['Research & Publication Workshop — 12 faculty','Digital Pedagogy — 28 faculty','Leadership Track — 6 staff'].map(t=>`<div class="cl-row" style="padding:10px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--violet-bg);color:var(--violet)">${icon('sparkles')}</div><div style="flex:1;font-size:12.5px">${t}</div><button class="btn sm" onclick="UI.toast('Nominated','ok','Training nomination routed')">Nominate</button></div>`).join('')}
+          ${['Research & Publication Workshop — 12 faculty','Digital Pedagogy — 28 faculty','Leadership Track — 6 staff'].map(t=>`<div class="cl-row" style="padding:10px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('sparkles')}</div><div style="flex:1;font-size:12.5px">${t}</div><button class="btn sm" onclick="UI.toast('Nominated','ok','Training nomination routed')">Nominate</button></div>`).join('')}
         </div>
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:10px">${icon('book')}<b>Learning records</b></div>
           ${kv('Trainings completed (YTD)','147')}${kv('Certifications tracked','89')}${kv('Avg. training ROI','3.2×')}${kv('Pending nominations','14')}
@@ -822,8 +846,8 @@
       </div>`;
     }
     return `<div class="grid g-2">
-      <div class="card card-pad" style="background:var(--violet-bg);border-color:#d7cbf5"><div class="row" style="gap:9px;color:var(--violet);font-weight:700">${icon('sparkles')} Predictive insights</div>
-        <div class="mt">${['Turnover risk: 7 employees elevated (contractual faculty)','Succession gaps in 2 leadership roles','Retirement wave: 4 employees within 3 years'].map(t=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:#fff;color:var(--violet)">${icon('activity')}</div><div style="font-size:12.5px">${t}</div></div>`).join('')}</div></div>
+      <div class="card card-pad" style="background:var(--surface-2);border-color:var(--line)"><div class="row" style="gap:9px;color:var(--brand);font-weight:700">${icon('sparkles')} Predictive insights</div>
+        <div class="mt">${['Turnover risk: 7 employees elevated (contractual faculty)','Succession gaps in 2 leadership roles','Retirement wave: 4 employees within 3 years'].map(t=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:#fff;color:var(--brand)">${icon('activity')}</div><div style="font-size:12.5px">${t}</div></div>`).join('')}</div></div>
       <div class="card card-pad"><div class="row" style="gap:9px;font-weight:700">${icon('target')} Competency gaps & readiness</div>
         <div class="mt">${kv('Promotion-ready employees','11')}${kv('Critical competency gaps','6')}${kv('Personalized learning paths','23')}${kv('Career-readiness flags','9')}</div>
         <div class="alertbar ai mt-lg">${icon('shield')} All AI insights are advisory. Employment decisions require authorized human approval.</div></div>
@@ -898,26 +922,37 @@
   };
   MC.initiateSeparation = function(){
     modal({title:'Initiate separation',sub:'Triggers clearance, asset verification & final pay',body:`
-      <div class="field"><label>Employee</label><select class="select">${DB.employees.map(e=>`<option>${e.name}</option>`).join('')}</select></div>
-      <div class="form-row"><div class="field"><label>Separation type</label><select class="select"><option>Resignation</option><option>End of Contract</option><option>Retirement</option><option>Termination</option></select></div>
-        <div class="field"><label>Last working day</label><input class="input" type="date" value="2026-11-30"></div></div>
-      <div class="field"><label>Reason / remarks</label><textarea class="input"></textarea></div>
+      <div class="field"><label>Employee</label><select class="select" id="sepEmp">${DB.employees.map(e=>`<option>${e.name}</option>`).join('')}</select></div>
+      <div class="form-row"><div class="field"><label>Separation type</label><select class="select" id="sepType"><option>Resignation</option><option>End of Contract</option><option>Retirement</option><option>Termination</option></select></div>
+        <div class="field"><label>Last working day</label><input class="input" id="sepLast" type="date" value="2026-11-30"></div></div>
+      <div class="field"><label>Reason / remarks</label><textarea class="input" id="sepReason"></textarea></div>
       <div class="alertbar warn">${icon('alertTriangle')}<div style="flex:1">This will auto-trigger: clearance workflow, asset accountability, benefits & payroll validation, exit interview, records archiving.</div></div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Separation initiated','ok','Clearance routed to all offices')">${icon('logout')} Initiate</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="sepSubmit">${icon('logout')} Initiate</button>`});
+    $('#sepSubmit')?.addEventListener('click',MC.submitSeparation);
+  };
+  MC.submitSeparation = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'').trim();
+    const name=v('sepEmp'); const emp=DB.employees.find(e=>e.name===name);
+    const seqs=DB.separations.map(s=>parseInt(String(s.id).replace(/\D/g,''),10)||0);
+    const id='SEP-'+String(Math.max(0,...seqs)+1).padStart(4,'0');
+    DB.separations.unshift({ id, emp:name, empId:emp?emp.id:null, type:v('sepType'), lastDay:v('sepLast'), status:'Initiated', progress:0, exit:false });
+    closeModal(); toast('Separation initiated','ok',`${id} · ${name}`);
+    if(MC.state.route==='offboarding')MC.go('offboarding');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('separations',{ id, emp_name:name, emp_id:emp?emp.id:null, sep_type:v('sepType'), last_day:v('sepLast')||null, status:'Initiated', progress:0, is_exit:false }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
   MC.attritionThemes = function(){
     const themes=[['Compensation competitiveness',46,'Pay vs. market & internal equity'],['Career growth & promotion',31,'Unclear advancement timelines'],['Workload & balance',23,'Load during peak terms']];
     modal({title:'Exit-interview themes',sub:'Last 12 months · aggregated',body:`<div class="ai-analysis">
       <div class="between"><span class="hd">${icon('sparkles')} Why people leave</span>${badge('Advisory','amber')}</div>
       <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0;line-height:1.55">Themes are aggregated from structured exit interviews. Attrition is concentrated in <b>contractual faculty</b> near end-of-contract — no single manager cluster detected.</p>
-      <div class="mt-sm">${themes.map(t=>`<div class="cb-row"><div class="cb-top"><span class="cl">${t[0]}</span><span class="cw">${t[2]}</span><span class="cs" style="color:var(--violet)">${t[1]}%</span></div><div class="cb-bar"><i style="width:${t[1]}%;background:var(--violet)"></i></div></div>`).join('')}</div>
+      <div class="mt-sm">${themes.map(t=>`<div class="cb-row"><div class="cb-top"><span class="cl">${t[0]}</span><span class="cw">${t[2]}</span><span class="cs" style="color:var(--brand)">${t[1]}%</span></div><div class="cb-bar"><i style="width:${t[1]}%;background:var(--violet)"></i></div></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Recommendation: review contractual faculty load & comp for AY 2026–2027 — subject to leadership approval.</div></div>`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Retention review opened','ok','Routed to HR & academic leadership')">${icon('check')} Open retention review</button>`});
   };
   MC.exitInterview = function(){
     modal({title:'Exit interview',sub:'Digital form · AI theme analysis',size:'lg',body:`
-      ${['Primary reason for leaving','Would you recommend MC as an employer?','What could we have done better?'].map((q,i)=>`<div class="field"><label>${q}</label>${i===1?`<div class="row" style="gap:3px">${[1,2,3,4,5].map(n=>`<span style="color:${n<=4?'var(--gold)':'var(--line)'}">${icon('star')}</span>`).join('')}</div>`:`<textarea class="input" style="min-height:60px">${i===0?'Career growth opportunity elsewhere':'More competitive compensation and clearer promotion timelines.'}</textarea>`}</div>`).join('')}
-      <div class="card card-pad" style="background:var(--violet-bg);border-color:#d7cbf5"><div class="row" style="gap:8px;color:var(--violet);font-weight:700">${icon('sparkles')} AI theme analysis</div><p style="font-size:13px;margin:8px 0 0;color:var(--ink-2)">Themes across recent exits: <b>compensation</b> (46%), <b>career growth</b> (31%), <b>workload</b> (23%). No single manager cluster detected.</p></div>`,
+      ${['Primary reason for leaving','Would you recommend MC as an employer?','What could we have done better?'].map((q,i)=>`<div class="field"><label>${q}</label>${i===1?`<div class="row" style="gap:3px">${[1,2,3,4,5].map(n=>`<span style="color:${n<=4?'var(--brand)':'var(--line-2)'}">${icon('star')}</span>`).join('')}</div>`:`<textarea class="input" style="min-height:60px">${i===0?'Career growth opportunity elsewhere':'More competitive compensation and clearer promotion timelines.'}</textarea>`}</div>`).join('')}
+      <div class="card card-pad" style="background:var(--surface-2);border-color:var(--line)"><div class="row" style="gap:8px;color:var(--brand);font-weight:700">${icon('sparkles')} AI theme analysis</div><p style="font-size:13px;margin:8px 0 0;color:var(--ink-2)">Themes across recent exits: <b>compensation</b> (46%), <b>career growth</b> (31%), <b>workload</b> (23%). No single manager cluster detected.</p></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Exit interview saved','ok','Added to attrition analysis')">${icon('check')} Submit</button>`});
   };
 
@@ -939,7 +974,7 @@
         <button class="btn" onclick="UI.toast('Workflow settings','info','Configure approval routes in Settings')">${icon('settings')} Routes</button></div>
       <div class="card"><div class="card-head"><h3>Pending your approval</h3><span class="badge b-red"><span class="bd"></span>${items.length} items</span></div>
       <div style="padding:8px">${items.map(it=>`<div class="cl-row" style="padding:14px 16px">
-        <div class="cl-check" style="background:var(--blue-bg);color:var(--blue)">${icon(kindIcon(it.kind))}</div>
+        <div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon(kindIcon(it.kind))}</div>
         <div style="flex:1"><b style="font-size:13.5px">${it.t}</b><div class="muted" style="font-size:11.5px">${it.kind} · ${it.ref} · ${it.who}</div></div>
         <div class="row" style="gap:7px">${it.action?`<button class="btn sm primary" onclick="${it.action};this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm danger" onclick="${it.act2};this.closest('.cl-row').remove()">${icon('x')}</button>`:`<button class="btn sm primary" onclick="UI.toast('Approved','ok','${it.ref}');this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm" onclick="UI.toast('Sent back','warn','${it.ref}');this.closest('.cl-row').remove()">Return</button>`}</div></div>`).join('')}</div></div>`,
     };
@@ -970,7 +1005,7 @@
       </div>
 
       <div class="grid g-3">
-        ${cats.map(c=>`<div class="card card-pad"><div class="row" style="gap:11px;margin-bottom:12px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--${c.color}-bg);color:var(--${c.color})">${icon(c.icon)}</div></div><b>${c.name}</b></div>
+        ${cats.map(c=>`<div class="card card-pad"><div class="row" style="gap:11px;margin-bottom:12px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--surface-2);color:var(--brand)">${icon(c.icon)}</div></div><b>${c.name}</b></div>
           ${c.items.map(it=>`<div class="between" style="padding:7px 0;border-bottom:1px solid var(--line-2)"><span style="font-size:12.5px">${it}</span><button class="btn sm ghost" onclick="MC.exportCSV('report')" title="Export">${icon('download')}</button></div>`).join('')}
         </div>`).join('')}
       </div>`,
@@ -1002,7 +1037,7 @@
       const matrix={
         'HR Administrator':[1,1,1,1,1,1,1,1],'Payroll Officer':[0,1,1,1,0,0,1,0],'Supervisor':[2,2,0,0,1,1,2,0],
         'Faculty':[2,2,0,2,2,0,0,0],'Employee':[2,2,0,2,0,0,0,0],'Applicant':[0,0,0,0,0,1,0,0]};
-      const cell=(v)=>v===1?`<span style="color:var(--green)">${icon('check')}</span>`:v===2?`<span class="muted" style="font-size:11px">View</span>`:`<span style="color:var(--line)">${icon('x')}</span>`;
+      const cell=(v)=>v===1?`<span style="color:var(--brand)">${icon('check')}</span>`:v===2?`<span class="muted" style="font-size:11px">View</span>`:`<span style="color:var(--line)">${icon('x')}</span>`;
       return `<div class="card mb"><div class="card-head"><div><h3>Role-based access control (RBAC)</h3><div class="sub">Configurable permissions per role · principle of least privilege</div></div><button class="btn sm" onclick="UI.toast('Role added','ok','Define permissions')">${icon('plus')} Add role</button></div>
         <div class="table-wrap"><table class="tbl"><thead><tr><th>Role</th>${perms.map(p=>`<th style="text-align:center">${p}</th>`).join('')}</tr></thead>
         <tbody>${roles.map(r=>`<tr><td><b>${r}</b></td>${matrix[r].map(v=>`<td style="text-align:center">${cell(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
@@ -1011,7 +1046,7 @@
     }
     if(MC.setTab==='security'){
       const items=[['lock','Multi-factor authentication (MFA)','Required for HR, Payroll & Admin roles','Enabled'],['shield','Role-based authorization','Least-privilege access enforced','Enabled'],['database','Encryption at rest & in transit','AES-256 at rest · TLS 1.3 in transit','Enabled'],['fileText','Audit logging','All material actions logged & immutable','Enabled'],['refresh','Backup & recovery','Daily backups · 15-min RPO · DR site','Enabled'],['heartPulse','Data Privacy Act compliance','NPC-registered · breach procedures defined','Compliant']];
-      return `<div class="grid g-2 mb">${items.map(([ic,t,d,s])=>`<div class="card card-pad"><div class="row between"><div class="row" style="gap:12px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--green-bg);color:var(--green)">${icon(ic)}</div></div><div><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:12px">${d}</div></div></div>${badge(s,'green')}</div></div>`).join('')}</div>
+      return `<div class="grid g-2 mb">${items.map(([ic,t,d,s])=>`<div class="card card-pad"><div class="row between"><div class="row" style="gap:12px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--surface-2);color:var(--brand)">${icon(ic)}</div></div><div><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:12px">${d}</div></div></div>${badge(s,'green')}</div></div>`).join('')}</div>
         <div class="card"><div class="card-head"><h3>Audit log</h3><button class="btn sm" onclick="MC.exportCSV('audit')">${icon('download')} Export</button></div>
         <div class="table-wrap"><table class="tbl"><thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Target</th><th>IP</th></tr></thead>
         <tbody>${DB.auditTrail.map(a=>`<tr><td class="muted" style="font-size:12px">${a.ts}</td><td><b>${a.actor}</b></td><td>${a.action}</td><td class="muted">${a.target}</td><td class="muted" style="font-size:12px">${a.ip}</td></tr>`).join('')}</tbody></table></div></div>`;
@@ -1019,12 +1054,12 @@
     if(MC.setTab==='integrations'){
       const ints=[['fingerprint','M10 Biometric Devices','Fingerprint & facial capture · 6 devices','Connected','green'],['link','Accounting SAP System','Payroll journal entries · secure API','Connected','green'],['smartphone','HRIS Mobile App','iOS & Android · self-service & GPS attendance','Live','green'],['mail','Email / SMTP','Automated notifications','Connected','green'],['database','Employee Master Sync','Onboarding → 201 → Timekeeping → Payroll','Active','green'],['cpu','AI Services','Resume screening, anomaly detection, assistant','Enabled','violet']];
       return `<div class="mb">${aiBanner(`Integration is a core requirement. Modules share one employee master — no duplicate encoding across Recruitment → Onboarding → 201 → Timekeeping → Payroll → Benefits.`)}</div>
-      <div class="grid g-2">${ints.map(([ic,t,d,s,c])=>`<div class="card card-pad"><div class="row between"><div class="row" style="gap:12px"><div class="stat" style="padding:0"><div class="ic" style="width:42px;height:42px;background:var(--${c}-bg);color:var(--${c})">${icon(ic)}</div></div><div><b style="font-size:14px">${t}</b><div class="muted" style="font-size:12px">${d}</div></div></div></div>
+      <div class="grid g-2">${ints.map(([ic,t,d,s,c])=>`<div class="card card-pad"><div class="row between"><div class="row" style="gap:12px"><div class="stat" style="padding:0"><div class="ic" style="width:42px;height:42px;background:var(--surface-2);color:var(--brand)">${icon(ic)}</div></div><div><b style="font-size:14px">${t}</b><div class="muted" style="font-size:12px">${d}</div></div></div></div>
         <div class="row between mt-lg">${badge(s,c)}<button class="btn sm" onclick="UI.toast('Connection tested','ok','${t} · healthy')">${icon('refresh')} Test</button></div></div>`).join('')}</div>`;
     }
     if(MC.setTab==='ai'){
       const caps=[['Resume screening & ranking','Recruitment','Native','Advisory — committee decides'],['Attendance anomaly detection','Timekeeping','Native','Advisory — supervisor reviews'],['Payroll validation','Payroll','Native','Advisory — officer confirms'],['Attrition & succession prediction','Performance','Native','Advisory — leadership reviews'],['HR Assistant (chat)','Global','Integrated','Read-only insights'],['Exit interview analysis','Offboarding','Native','Advisory']];
-      return `<div class="card card-pad mb" style="background:var(--violet-bg);border-color:#d7cbf5"><div class="row" style="gap:10px;color:var(--violet);font-weight:700;font-size:15px">${icon('shield')} AI Governance & Responsible Use</div>
+      return `<div class="card card-pad mb" style="background:var(--surface-2);border-color:var(--line)"><div class="row" style="gap:10px;color:var(--brand);font-weight:700;font-size:15px">${icon('shield')} AI Governance & Responsible Use</div>
         <p style="font-size:13.5px;color:var(--ink-2);margin:10px 0 0;line-height:1.6">The College retains <b>human oversight</b> over all decisions affecting employment, compensation, performance, ranking, promotion, benefits eligibility, and separation. AI recommendations <b>never auto-execute</b> — an authorized person always approves.</p></div>
       <div class="card"><div class="card-head"><h3>AI capability register</h3></div><div class="table-wrap"><table class="tbl"><thead><tr><th>Capability</th><th>Module</th><th>Type</th><th>Human oversight</th><th>Toggle</th></tr></thead>
       <tbody>${caps.map(([c,m,t,o])=>`<tr><td><b>${c}</b></td><td class="muted">${m}</td><td>${badge(t,t==='Native'?'teal':'blue')}</td><td><span class="ai-flag">${icon('shield')} ${o}</span></td><td><div class="seg"><button class="active" style="padding:4px 10px">On</button><button style="padding:4px 10px">Off</button></div></td></tr>`).join('')}</tbody></table></div>
@@ -1032,7 +1067,7 @@
     }
     const flows=[['Leave / OB / OT','Employee → Supervisor → HR'],['Personnel Requisition','Dept. Head → HR → Finance → VP Admin'],['Job Offer','Dept. Head → HR → VP Admin'],['Promotion','Dean → Ranking Committee → VP Acad'],['Payroll','Payroll Officer → Finance Director → VP Admin'],['Clearance','Auto-route to 9 offices in parallel']];
     return `<div class="card"><div class="card-head"><div><h3>Approval workflows</h3><div class="sub">Configurable routes per the College's policies</div></div><button class="btn sm" onclick="UI.toast('Workflow editor','info','Drag to reorder approval steps')">${icon('edit')} Configure</button></div>
-      <div style="padding:8px">${flows.map(([t,r])=>`<div class="cl-row" style="padding:14px 16px"><div class="cl-check" style="background:var(--blue-bg);color:var(--blue)">${icon('refresh')}</div><div style="flex:1"><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:12px;margin-top:3px">${r.split(' → ').map(s=>`<span class="chip" style="margin-right:4px">${s}</span>`).join('<span style="color:var(--ink-3)">→</span> ')}</div></div><span class="badge b-green"><span class="bd"></span>Active</span></div>`).join('')}</div></div>`;
+      <div style="padding:8px">${flows.map(([t,r])=>`<div class="cl-row" style="padding:14px 16px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('refresh')}</div><div style="flex:1"><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:12px;margin-top:3px">${r.split(' → ').map(s=>`<span class="chip" style="margin-right:4px">${s}</span>`).join('<span style="color:var(--ink-3)">→</span> ')}</div></div><span class="badge b-green"><span class="bd"></span>Active</span></div>`).join('')}</div></div>`;
   }
 
   /* ========================================================

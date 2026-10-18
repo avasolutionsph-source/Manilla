@@ -24,8 +24,9 @@ MC.badge = function (text, tone) {
 };
 
 MC.stat = function ({ icon: ic, color, value, label, trend, trendDir, onclick }) {
-  const tone = { blue:'var(--blue)', green:'var(--green)', amber:'var(--amber)', violet:'var(--violet)', teal:'var(--teal)', red:'var(--red)', navy:'var(--brand)' }[color] || 'var(--brand)';
-  const bg = { blue:'var(--blue-bg)', green:'var(--green-bg)', amber:'var(--amber-bg)', violet:'var(--violet-bg)', teal:'var(--teal-bg)', red:'var(--red-bg)', navy:'var(--blue-bg)' }[color] || 'var(--blue-bg)';
+  // Apple-minimal: KPI icon tiles are decorative — always neutral (data in value/label).
+  const tone = 'var(--brand)';
+  const bg = 'var(--surface-2)';
   const tr = trend ? `<span class="trend ${trendDir||'up'}">${icon(trendDir==='down'?'trendingDown':'trendingUp')}${trend}</span>` : '';
   return `<div class="card stat" ${onclick?`style="cursor:pointer" onclick="${onclick}"`:''}>
     <div class="top"><div class="ic" style="background:${bg};color:${tone}">${icon(ic)}</div>${tr}</div>
@@ -45,10 +46,10 @@ const SEAL = MC.seal;
    ============================================================ */
 MC.PERSONA = {
   'HR Administrator': { id:'MC-0088', name:'Noel C. Racho', title:'Director, Human Resources Division', initials:'NR', color:'#1d3473' },
-  'Management':       { id:'MC-EXEC', name:'Dr. Rosario P. Laurel', title:'VP for Administration', initials:'RL', color:'#6d4bd4' },
-  'Supervisor':       { id:'MC-0417', name:'Ma. Jasmin B. Velasco', title:'Department Head · ICT Office', initials:'JV', color:'#0f8f9e' },
+  'Management':       { id:'MC-EXEC', name:'Dr. Rosario P. Laurel', title:'VP for Administration', initials:'RL', color:'#1d3473' },
+  'Supervisor':       { id:'MC-0417', name:'Ma. Jasmin B. Velasco', title:'Department Head · ICT Office', initials:'JV', color:'#17295f' },
   'Employee':         { id:'MC-1035', name:'Roberto M. Dizon', title:'IT Systems Administrator', initials:'RD', color:'#274597' },
-  'Applicant':        { id:'A-5543', name:'Diane Rose F. Castro', title:'Applicant · IT Support Specialist', initials:'DC', color:'#c07d16' },
+  'Applicant':        { id:'A-5543', name:'Diane Rose F. Castro', title:'Applicant · IT Support Specialist', initials:'DC', color:'#284a9a' },
 };
 MC.SUP_TEAM = ['MC-1035','MC-0631','MC-1455','MC-0902','MC-1288','MC-0744'];
 
@@ -343,8 +344,9 @@ MC.notifSets = {
 };
 MC.openNotifications = function () {
   const n = MC.notifSets[MC.state.role] || [];
-  const tones = { blue:'var(--blue)', amber:'var(--amber)', violet:'var(--violet)', green:'var(--green)', teal:'var(--teal)' };
-  const bgs = { blue:'var(--blue-bg)', amber:'var(--amber-bg)', violet:'var(--violet-bg)', green:'var(--green-bg)', teal:'var(--teal-bg)' };
+  // Neutral notification icon tiles — the icon + text carry the meaning.
+  const tones = { blue:'var(--brand)', amber:'var(--brand)', violet:'var(--brand)', green:'var(--brand)', teal:'var(--brand)' };
+  const bgs = { blue:'var(--surface-2)', amber:'var(--surface-2)', violet:'var(--surface-2)', green:'var(--surface-2)', teal:'var(--surface-2)' };
   const html = `<div style="width:360px">
     <div class="menu-head"><b>Notifications</b><span style="font-size:12px;color:var(--brand-2);cursor:pointer" id="markAll">Mark all read</span></div>
     <div style="max-height:400px;overflow-y:auto">
@@ -363,7 +365,7 @@ MC.openUserMenu = function () {
     <div class="menu-head"><div class="row" style="gap:10px"><div class="ava-sm" style="background:${p.color}">${p.initials}</div><div><b>${p.name}</b><div style="font-size:11.5px;color:var(--ink-3)">${p.title}</div></div></div></div>
     ${isInternal?`<div class="menu-item" data-a="profile">${icon('userCheck')} My 201 File</div>`:`<div class="menu-item" data-a="profile">${icon('userCheck')} My profile</div>`}
     <div class="menu-item" data-a="role">${icon('refresh')} Switch role</div>
-    <div class="menu-item" data-a="logout" style="color:var(--red)">${icon('logout')} Sign out</div></div>`;
+    <div class="menu-item" data-a="logout">${icon('logout')} Sign out</div></div>`;
   const m = popover($('#userChip'), html);
   m.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; closePopover();
     if (a.dataset.a==='logout' || a.dataset.a==='role') MC.renderLogin();

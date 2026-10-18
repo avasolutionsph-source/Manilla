@@ -35,7 +35,7 @@
 
       <div class="grid mb" style="grid-template-columns:1.5fr 1fr">
         <div class="card"><div class="card-head"><div><h3>Attrition forecast</h3><div class="sub">Actual + 4-month AI projection</div></div><div class="row" style="gap:8px"><span class="ai-flag">${icon('sparkles')} Predictive</span><button class="btn sm" onclick="MC.execAttrition()">${icon('eye')} Explain</button></div></div>
-          <div class="card-pad">${charts.line([5.8,6.0,6.4,6.1,6.2,6.3,6.1,6.0,6.2,6.4],{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'],color:'var(--violet)'})}
+          <div class="card-pad">${charts.line([5.8,6.0,6.4,6.1,6.2,6.3,6.1,6.0,6.2,6.4],{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'],color:'var(--brand-2)'})}
           <div class="hint" style="margin-top:6px">Dashed region beyond Oct is AI-projected. Forecast band: 6.0–6.5%.</div></div></div>
         <div class="card"><div class="card-head"><h3>Succession readiness</h3><button class="btn sm" onclick="MC.execSuccession()">${icon('eye')} Details</button></div><div class="card-pad" style="text-align:center">
           ${charts.ring(78,{size:150,color:'var(--brand-2)',label:'roles covered'})}
@@ -67,7 +67,7 @@
     };
   };
   function miniKpi(v,l,c){ return `<div class="card card-pad" style="padding:16px"><div class="v" style="font-size:22px;font-weight:800;color:var(--${c==='navy'?'brand':c})">${v}</div><div class="muted" style="font-size:11.5px;margin-top:2px">${l}</div></div>`; }
-  function watch(ic,c,t,d,rec){ return `<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--${c}-bg);color:var(--${c})">${icon(ic)}</div>
+  function watch(ic,c,t,d,rec){ return `<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon(ic)}</div>
     <div style="flex:1"><b style="font-size:13.5px">${t}</b><div class="muted" style="font-size:11.5px">${d}</div></div>
     <div style="text-align:right;max-width:240px;display:flex;flex-direction:column;align-items:flex-end;gap:7px"><span class="ai-flag" style="white-space:normal">${icon('sparkles')} ${rec}</span><button class="btn sm" onclick="UI.toast('Routed for approval','ok','${rec.replace(/'/g,'')}')">Act on this</button></div></div>`; }
 
@@ -91,7 +91,7 @@
         <div><b style="font-size:20px;color:var(--brand)">11</b> <span class="muted" style="font-size:12px">in pipeline</span></div>
         <div><b style="font-size:20px;color:var(--amber)">2</b> <span class="muted" style="font-size:12px">at risk</span></div></div>
       <div class="muted" style="font-size:11.5px;margin-top:16px">Roles needing attention:</div>
-      <div class="mt-sm">${roles.map(r=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--amber-bg);color:var(--amber)">${icon('alertTriangle')}</div><div style="flex:1"><b style="font-size:13px">${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></div><span class="ai-flag" style="white-space:normal">${r[2]}</span></div>`).join('')}</div>
+      <div class="mt-sm">${roles.map(r=>`<div class="cl-row" style="padding:11px 13px;margin-bottom:8px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('alertTriangle')}</div><div style="flex:1"><b style="font-size:13px">${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></div><span class="ai-flag" style="white-space:normal">${r[2]}</span></div>`).join('')}</div>
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('shield')} Advisory · appointments require Board / VP approval.</div></div>`,
       foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Development plans accelerated','ok','3 successors flagged for fast-track')">${icon('check')} Accelerate plans</button>`});
   };
@@ -100,9 +100,9 @@
      2. INTERACTIVE ORG CHART
      ======================================================== */
   const ORG = [
-    { vp:'VP for Administration', head:'Dr. Rosario P. Laurel', color:'#6d4bd4', depts:['Human Resources Division','Finance & Accounting','Information & Communications Technology Office','Property & Supply','Security Office'] },
+    { vp:'VP for Administration', head:'Dr. Rosario P. Laurel', color:'#17295f', depts:['Human Resources Division','Finance & Accounting','Information & Communications Technology Office','Property & Supply','Security Office'] },
     { vp:'VP for Academic Affairs', head:'Dr. Teresa M. Aguinaldo', color:'#1d3473', depts:['College of Arts & Sciences','Basic Education Unit','Grade School','High School','Library Services','Research & Publications'] },
-    { vp:'VP for Mission & Identity', head:'Sr. Ma. Consolacion V. Reyes', color:'#0f8f9e', depts:['Campus Ministry','Guidance & Counseling','Student Affairs'] },
+    { vp:'VP for Mission & Identity', head:'Sr. Ma. Consolacion V. Reyes', color:'#17295f', depts:['Campus Ministry','Guidance & Counseling','Student Affairs'] },
   ];
   const deptHead = { 'Human Resources Division':'Noel C. Racho','Information & Communications Technology Office':'Ma. Jasmin B. Velasco','College of Arts & Sciences':'Dean, CAS','Library Services':'Chief Librarian','Guidance & Counseling':'Dean of Student Affairs','Campus Ministry':'Sr. M. Lopez' };
   MC.orgCampus = 'All';
@@ -125,7 +125,7 @@
     const total = DB.employees.filter(e=>MC.orgCampus==='All'||e.campus===MC.orgCampus).length;
     const totalVac = DB.jobs.filter(j=>j.status==='Open').length;
     return `<div class="org">
-      <div class="org-node lvl0"><div class="oic" style="background:var(--gold)">${icon('building')}</div><div><b>Office of the President</b><span>Miriam College · ${MC.orgCampus==='All'?'All campuses':MC.orgCampus}</span></div>
+      <div class="org-node lvl0"><div class="oic" style="background:rgba(255,255,255,.14)">${icon('building')}</div><div><b>Office of the President</b><span>Miriam College · ${MC.orgCampus==='All'?'All campuses':MC.orgCampus}</span></div>
         <div class="cnt"><span class="chip" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)">${total} employees</span>${totalVac?`<span class="badge b-amber"><span class="bd"></span>${totalVac} open</span>`:''}</div></div>
       <div class="org-children">
         ${ORG.map(v=>{ const vpCount=v.depts.reduce((a,d)=>a+deptCount(d),0); if(MC.orgCampus!=='All'&&vpCount===0) return '';
@@ -171,7 +171,7 @@
             <div id="simDelta"></div>
             <div style="height:1px;background:rgba(255,255,255,.12);margin:18px 0"></div>
             <div class="between"><span style="color:#c7d2ef">Budget utilization</span><b id="simUtil" style="font-size:18px">95.3%</b></div>
-            <div class="prog" style="margin-top:8px;background:rgba(255,255,255,.14)"><i id="simBar" style="width:95%;background:var(--gold)"></i></div>
+            <div class="prog" style="margin-top:8px;background:rgba(255,255,255,.14)"><i id="simBar" style="width:95%;background:#fff"></i></div>
             <div class="between" style="margin-top:12px"><span style="color:#c7d2ef">Variance vs budget</span><b id="simVar">${fmt.peso(BUDGET-BASE_COST)}</b></div>
           </div>
           <div id="simWarn" class="mt"></div>
@@ -189,7 +189,7 @@
           $('#simDelta',root).innerHTML = delta>0?`<span class="sim-delta" style="background:rgba(255,255,255,.14);color:#ffd9a8">${icon('trendingUp')} +${fmt.peso(delta)} vs current</span>`:`<span class="sim-delta" style="background:rgba(255,255,255,.14);color:#9fe3c0">At current cost</span>`;
           $('#simUtil',root).textContent=util.toFixed(1)+'%';
           $('#simBar',root).style.width=Math.min(util,100)+'%';
-          $('#simBar',root).style.background = util>100?'var(--red)':util>98?'#ffb3b3':'var(--gold)';
+          $('#simBar',root).style.background = util>100?'var(--red)':util>98?'#ffb3b3':'#fff';
           $('#simVar',root).textContent = (variance>=0?'':'−')+fmt.peso(Math.abs(variance));
           $('#simVar',root).style.color = variance<0?'#ff9a9a':'#fff';
           $('#simWarn',root).innerHTML = util>100
@@ -198,8 +198,8 @@
           const shareQC=.63,shareNU=.25,shareAL=.12;
           $('#simCampus',root).innerHTML = charts.bars([
             {label:'Quezon City',value:Math.round(proj*shareQC/1e6),color:'var(--brand)'},
-            {label:'Nuvali',value:Math.round(proj*shareNU/1e6),color:'var(--teal)'},
-            {label:'Alviera',value:Math.round(proj*shareAL/1e6),color:'var(--gold)'},
+            {label:'Nuvali',value:Math.round(proj*shareNU/1e6),color:'var(--brand)'},
+            {label:'Alviera',value:Math.round(proj*shareAL/1e6),color:'var(--brand)'},
           ],{fmt:(v)=>'₱'+v+'M'});
         };
         ids.forEach(id=>$('#sim_'+id,root).addEventListener('input',recompute));
@@ -228,11 +228,11 @@
   ]);
   MC.ONBOARDING = [
     { id:'ONB-002', name:'Reina M. Bautista', pos:'Assistant Professor — Mathematics', dept:'College of Arts & Sciences', campus:'Quezon City', start:'2026-11-03', color:'#1d3473', initials:'RB', tasks:taskTpl().map((t,i)=>({...t,done:i<5})) },
-    { id:'ONB-003', name:'Patricia Anne L. Yu', pos:'IT Support Specialist', dept:'ICT Office', campus:'Quezon City', start:'2026-11-10', color:'#0f8f9e', initials:'PY', tasks:taskTpl().map((t,i)=>({...t,done:i<2})) },
+    { id:'ONB-003', name:'Patricia Anne L. Yu', pos:'IT Support Specialist', dept:'ICT Office', campus:'Quezon City', start:'2026-11-10', color:'#17295f', initials:'PY', tasks:taskTpl().map((t,i)=>({...t,done:i<2})) },
   ];
   MC.startOnboarding = function(){
     if (MC.ONBOARDING.find(o=>o.id==='ONB-004')) return;
-    MC.ONBOARDING.unshift({ id:'ONB-004', name:'Diane Rose F. Castro', pos:'IT Support Specialist', dept:'ICT Office', campus:'Quezon City', start:'2026-11-03', color:'#c07d16', initials:'DC', tasks:taskTpl().map((t,i)=>({...t,done:i<1})) });
+    MC.ONBOARDING.unshift({ id:'ONB-004', name:'Diane Rose F. Castro', pos:'IT Support Specialist', dept:'ICT Office', campus:'Quezon City', start:'2026-11-03', color:'#17295f', initials:'DC', tasks:taskTpl().map((t,i)=>({...t,done:i<1})) });
   };
   const onbProgress = (o) => Math.round(o.tasks.filter(t=>t.done).length / o.tasks.length * 100);
   MC.pages.onboarding = function () {
@@ -268,7 +268,7 @@
         <h4 style="font-size:13.5px;margin:20px 0 10px">Checklist</h4>
         ${o.tasks.map((t,i)=>`<div class="cl-row" style="padding:11px 14px;margin-bottom:8px;cursor:pointer" data-task="${i}">
           <div class="cl-check" style="background:${t.done?'var(--green-bg)':'var(--line-2)'};color:${t.done?'var(--green)':'var(--ink-3)'}">${icon(t.done?'check':'clock')}</div>
-          <div style="flex:1;font-size:12.8px;${t.done?'':'font-weight:600'}">${t.t}</div>${t.auto?`<span class="chip" style="color:var(--teal)">${icon('refresh')} Auto</span>`:''}</div>`).join('')}
+          <div style="flex:1;font-size:12.8px;${t.done?'':'font-weight:600'}">${t.t}</div>${t.auto?`<span class="chip" style="color:var(--ink-2)">${icon('refresh')} Auto</span>`:''}</div>`).join('')}
         <div class="alertbar info mt">${icon('link')} Auto tasks are completed by the system from recruitment data — no manual encoding.</div>
         ${p===100?`<button class="btn primary block mt-lg" onclick="UI.toast('Onboarding complete','ok','${o.name} is now an active employee');UI.closeDrawer()">${icon('check')} Finish & activate employee</button>`:''}
       </div>`});
@@ -327,7 +327,7 @@
   MC.generateDoc = function(root){
     const prev = $('#docPreview',root);
     MC.docState.purpose = $('#docPurpose',root).value.trim();
-    prev.innerHTML = `<div class="paper-empty" style="align-self:center"><div class="ai-typing" style="justify-content:center">${'<i></i>'.repeat(3)}</div><div style="margin-top:12px;color:var(--violet);font-weight:600" class="doc-gen-note">${icon('sparkles')} AI is drafting your document…</div><p class="doc-gen-note" style="font-size:12px;margin-top:4px">Pulling from the 201 File · applying College templates</p></div>`;
+    prev.innerHTML = `<div class="paper-empty" style="align-self:center"><div class="ai-typing" style="justify-content:center">${'<i></i>'.repeat(3)}</div><div style="margin-top:12px;color:var(--brand);font-weight:600" class="doc-gen-note">${icon('sparkles')} AI is drafting your document…</div><p class="doc-gen-note" style="font-size:12px;margin-top:4px">Pulling from the 201 File · applying College templates</p></div>`;
     $('#docGen',root).disabled = true; $('#docGen',root).innerHTML = `${icon('refresh')} Generating…`;
     setTimeout(()=>{
       prev.innerHTML = docPaper(MC.docState.type, DB.empById(MC.docState.empId), MC.docState.purpose);
@@ -429,7 +429,7 @@
         ${stat({icon:'fileText',color:'violet',value:'18',label:'Report types'})}
       </div>
       <div class="grid g-2 mb">
-        ${AGENCIES.map(a=>`<div class="card"><div class="card-head"><div class="row" style="gap:11px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--${a.color}-bg);color:var(--${a.color})">${icon(a.icon)}</div></div><div><h3>${a.name}</h3><div class="sub">${a.full}</div></div></div></div>
+        ${AGENCIES.map(a=>`<div class="card"><div class="card-head"><div class="row" style="gap:11px"><div class="stat" style="padding:0"><div class="ic" style="width:40px;height:40px;background:var(--surface-2);color:var(--brand)">${icon(a.icon)}</div></div><div><h3>${a.name}</h3><div class="sub">${a.full}</div></div></div></div>
           <div style="padding:6px 8px">${a.reports.map(([r,due,st])=>`<div class="cl-row" style="padding:10px 13px;margin:4px"><div style="flex:1"><b style="font-size:12.8px">${r}</b><div class="muted" style="font-size:11px">Due: ${due}</div></div>${badge(st,toneOf(st))}<button class="btn sm" onclick="MC.exportCSV('compliance')">${icon('download')}</button></div>`).join('')}</div></div>`).join('')}
       </div>
       <div class="card"><div class="card-head"><div><h3>Upcoming deadlines</h3><div class="sub">Next 30 days</div></div></div>
