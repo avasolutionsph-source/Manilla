@@ -451,7 +451,7 @@
       ${soon.map(e=>`<div class="cl-row clickable" style="padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="UI.closeModal();MC.openEmployee('${e.id}')">${avatar(e)}
         <div style="flex:1"><b style="font-size:13px">${e.name}</b><div class="muted" style="font-size:11.5px">${e.position} · ${e.type} · ${e.campus}</div></div>
         <div style="text-align:right;min-width:92px"><div style="font-size:12px;font-weight:700;color:var(--ink)">${fmt.date(e.contractEnds)}</div><div class="muted" style="font-size:11px">${daysTo(e.contractEnds)} days left</div></div>
-        <button class="btn sm" onclick="event.stopPropagation();UI.toast('Renewal initiated','ok','${e.name} · routed to Dept. Head')">${icon('refresh')} Renew</button></div>`).join('')}
+        <button class="btn sm" onclick="event.stopPropagation();MC.renewContract('${e.id}')">${icon('refresh')} Renew</button></div>`).join('')}
       <div class="hint mt" style="display:flex;gap:6px;align-items:center">${icon('info')} Click a row to open the full 201 file, or initiate a renewal workflow.</div>`,
       foot:`<button class="btn primary" data-close>Close</button>`});
   };
@@ -481,7 +481,7 @@
       <div class="card card-pad">${kv('Email',e.email)}${kv('Mobile',e.phone)}${kv('Campus',e.campus)}${kv('Address','Loyola Heights, Quezon City')}${kv('Emergency contact','Listed · verified')}</div></div>`;
     if(tab==='employment') return `<div class="grid g-2"><div class="card card-pad">${kv('Position',e.position)}${kv('Department',e.dept)}${kv('Employment type',e.type)}${kv('Date hired',fmt.date(e.hired))}${kv('Supervisor',e.supervisor)}</div>
       <div class="card card-pad">${kv('Status',e.status)}${kv('Salary grade',e.sg)}${kv('Academic rank',e.rank)}${kv('Work schedule','Mon–Fri · 8:00–17:00')}${kv('Contract ends',e.contractEnds?fmt.date(e.contractEnds):'— (Regular)')}</div></div>
-      ${e.contractEnds?`<div class="alertbar warn mt">${icon('alertTriangle')}<div style="flex:1">Contract ends ${fmt.date(e.contractEnds)} (${daysTo(e.contractEnds)} days). <b>Initiate renewal?</b></div><button class="btn sm" onclick="UI.toast('Renewal workflow started','ok','Routed to Dept. Head')">Initiate renewal</button></div>`:''}`;
+      ${e.contractEnds?`<div class="alertbar warn mt">${icon('alertTriangle')}<div style="flex:1">Contract ends ${fmt.date(e.contractEnds)} (${daysTo(e.contractEnds)} days). <b>Initiate renewal?</b></div><button class="btn sm" onclick="MC.renewContract('${e.id}')">Initiate renewal</button></div>`:''}`;
     if(tab==='service') return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Effective</th><th>Action</th><th>Position</th><th>Details</th></tr></thead><tbody>
       <tr><td>${fmt.date(e.hired)}</td><td>${badge('Hired','green')}</td><td>${e.position}</td><td class="muted">Initial appointment</td></tr>
       <tr><td>Jun 1, 2021</td><td>${badge('Regularized','teal')}</td><td>${e.position}</td><td class="muted">Passed probation</td></tr>
@@ -675,7 +675,7 @@
 
       <div class="grid g-3">
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('fileText')}<b>Statutory reports</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">BIR, SSS, PhilHealth, Pag-IBIG remittance files.</p><button class="btn block" onclick="MC.exportCSV('statutory')">${icon('download')} Generate reports</button></div>
-        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('scroll')}<b>BIR Form 2316</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Year-end certificate of compensation & tax withheld.</p><button class="btn block" onclick="UI.toast('2316 batch generated','ok','412 certificates ready')">${icon('printer')} Issue 2316</button></div>
+        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('scroll')}<b>BIR Form 2316</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Year-end certificate of compensation & tax withheld.</p><button class="btn block" onclick="MC.gen2316Batch()">${icon('printer')} Issue 2316</button></div>
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('link')}<b>Journal entries → SAP</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Post payroll JE to the Accounting SAP system.</p><button class="btn block primary" id="pJE2">${icon('arrowRight')} Post to SAP</button></div>
       </div>`,
       onMount(root){
@@ -706,7 +706,7 @@
       <div class="grid g-2 mt-lg"><div><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Earnings</div>${kv('Basic pay',fmt.peso2(it.basic))}${kv('Allowances',fmt.peso2(it.allow))}${kv('Overtime',fmt.peso2(it.ot))}<div class="kv"><span class="k"><b>Gross</b></span><span class="v"><b>${fmt.peso2(it.gross)}</b></span></div></div>
         <div><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Deductions</div>${kv('Withholding tax',fmt.peso2(it.tax))}${kv('SSS',fmt.peso2(it.sss))}${kv('PhilHealth',fmt.peso2(it.phic))}${kv('Pag-IBIG',fmt.peso2(it.hdmf))}${kv('Loans',fmt.peso2(it.loans))}<div class="kv"><span class="k"><b>Total</b></span><span class="v"><b>${fmt.peso2(ded)}</b></span></div></div></div>
       <div class="card card-pad mt-lg" style="background:var(--navy-900);color:#fff"><div class="between"><span style="color:#c7d2ef">NET PAY</span><b style="font-size:22px;color:#fff">${fmt.peso2(it.net)}</b></div></div>`,
-      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.toast('Payslip downloaded','ok','PDF · ${e.name}')">${icon('download')} Download PDF</button>`});
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="MC.savePayslip('${id}')">${icon('download')} Download PDF</button>`});
   };
   MC.postJE = function(){
     const dr=9847200, cr=1108558+915000+386786+7436856;
@@ -865,7 +865,7 @@
       <div class="ai-analysis" style="border:none;padding:0;background:none">${crit.map(([c,v])=>{const col=v>=4.5?'var(--green)':v>=3.5?'var(--brand-2)':'var(--amber)';return `<div class="cb-row"><div class="cb-top"><span class="cl">${c}</span><span class="cs" style="color:${col}">${v.toFixed(1)}<span style="color:var(--ink-3);font-weight:400"> / 5</span></span></div><div class="cb-bar"><i style="width:${v/5*100}%;background:${col}"></i></div></div>`;}).join('')}</div>
       <div class="field mt"><label>Individual Development Plan (IDP)</label><textarea class="input">Focus on research output and completion of doctoral units. Nominate for Research & Publication Workshop. Target 2 publications within AY.</textarea></div>
       <div class="alertbar info">${icon('info')} Outstanding/VS ratings may trigger configurable merit increases in Payroll — subject to approval.</div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="UI.toast('Saved as draft','info')">Save draft</button><button class="btn primary" onclick="MC.submitReview('${empId}')">${icon('send')} Submit & route</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn" onclick="MC.saveReviewDraft('${empId}')">Save draft</button><button class="btn primary" onclick="MC.submitReview('${empId}')">${icon('send')} Submit & route</button>`});
   };
   MC.submitReview = function(empId){ const r=DB.reviews.find(x=>x.emp===empId); if(r)r.status='Submitted'; closeModal(); toast('Evaluation submitted','ok','Routed for employee acknowledgment'); if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('performance_reviews','emp_id',empId,{status:'Submitted'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.computeRanking = function(){
@@ -906,8 +906,8 @@
 
       <div class="grid g-3">
         <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('message')}<b>Exit interview</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Structured digital exit interview with AI theme analysis.</p><button class="btn block" onclick="MC.exitInterview()">${icon('clipboard')} Open exit interview</button></div>
-        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('wallet')}<b>Final pay</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Last pay, pro-rated 13th month, leave conversion.</p><button class="btn block" onclick="UI.toast('Final pay computed','ok','₱48,210 · pending Finance clearance')">${icon('coins')} Compute final pay</button></div>
-        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('fileText')}<b>Separation docs</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">COE, clearance certificate, quitclaim.</p><button class="btn block" onclick="UI.toast('Documents generated','ok','COE + clearance certificate')">${icon('printer')} Generate documents</button></div>
+        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('wallet')}<b>Final pay</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">Last pay, pro-rated 13th month, leave conversion.</p><button class="btn block" onclick="MC.saveFinalPay()">${icon('coins')} Compute final pay</button></div>
+        <div class="card card-pad"><div class="row" style="gap:10px;margin-bottom:6px">${icon('fileText')}<b>Separation docs</b></div><p class="muted" style="font-size:12.5px;margin:0 0 12px">COE, clearance certificate, quitclaim.</p><button class="btn block" onclick="MC.saveSeparationDocs()">${icon('printer')} Generate documents</button></div>
       </div>`,
       onMount(root){ $('#ofNew',root).addEventListener('click',MC.initiateSeparation); }
     };
@@ -1075,6 +1075,36 @@
   /* ========================================================
      EXPORT
      ======================================================== */
+  MC.renewContract = function(empId){
+    const e=DB.empById(empId); if(!e)return;
+    let d=e.contractEnds?new Date(e.contractEnds):new Date(); d.setFullYear(d.getFullYear()+1);
+    e.contractEnds=d.toISOString().slice(0,10);
+    toast('Contract renewed','ok',`${e.name} \u00b7 extended to ${fmt.date(e.contractEnds)}`);
+    if(MC.state.route==='employees')MC.go('employees');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.update('employees','id',empId,{contract_ends:e.contractEnds}).catch(err=>toast('Sync failed','warn',String(err.message||err)));
+  };
+  MC.saveReviewDraft = function(empId){
+    const r=DB.reviews.find(x=>x.emp===empId); if(r)r.status='In Progress';
+    toast('Saved as draft','ok','Evaluation saved \u2014 not yet routed');
+    if(window.MC&&MC.db&&MC.db.live()) MC.db.update('performance_reviews','emp_id',empId,{status:'In Progress'}).catch(e=>toast('Sync failed','warn',String(e.message||e)));
+  };
+  MC.gen2316Batch = function(){
+    const rows=[['Employee ID','Name','TIN','Annual Gross','Annual Tax Withheld'],...DB.payrollRun.items.map(it=>{const e=DB.empById(it.id)||{};return [it.id,e.name||'',e.tin||'',(it.gross||0)*24,(it.tax||0)*24];})];
+    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    download('BIR_2316_batch.csv',csv);
+    toast('2316 batch generated','ok',`${DB.payrollRun.items.length} certificates \u00b7 CSV downloaded`);
+  };
+  MC.saveFinalPay = function(){
+    const body=`<h2>Final Pay Computation</h2>
+      <h2>Components</h2><table><tr><td>Last salary (pro-rated)</td><td class="r">\u20b128,500.00</td></tr><tr><td>Pro-rated 13th month</td><td class="r">\u20b114,210.00</td></tr><tr><td>Leave conversion (8 days)</td><td class="r">\u20b19,600.00</td></tr><tr><td>Less: outstanding obligations</td><td class="r">(\u20b14,100.00)</td></tr><tr class="tot"><td>NET FINAL PAY</td><td class="r">\u20b148,210.00</td></tr></table>
+      <p style="margin-top:18px;font-size:11px;color:#777">Subject to Finance clearance and final tax adjustment.</p>`;
+    if(MC.saveHtmlFile) MC.saveHtmlFile('Final_Pay_Computation.html','Final Pay Computation',body); else toast('Final pay computed','ok');
+  };
+  MC.saveSeparationDocs = function(){
+    const body=`<h2>Certificate of Employment</h2><p>This certifies that the bearer was employed by Miriam College. This certificate is issued upon request for whatever legal purpose it may serve.</p>
+      <h2>Clearance Certificate</h2><p>All accountabilities have been settled and the employee is hereby cleared from all obligations, subject to completion of the clearance process across all offices.</p>`;
+    if(MC.saveHtmlFile) MC.saveHtmlFile('Separation_Documents.html','Separation Documents',body); else toast('Documents generated','ok');
+  };
   MC.exportCSV = function(type){
     let rows=[['Export'],['Generated',new Date().toISOString()]];
     if(type==='employees'){ rows=[['ID','Name','Position','Department','Campus','Type','Status','Date Hired'],...DB.employees.map(e=>[e.id,e.name,e.position,e.dept,e.campus,e.type,e.status,e.hired])]; }

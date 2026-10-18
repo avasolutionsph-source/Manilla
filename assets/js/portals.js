@@ -220,6 +220,14 @@
     toast('Acknowledged', 'ok', 'Your acknowledgment was recorded');
     if (window.MC && MC.db && MC.db.live()) MC.db.update('performance_reviews', 'emp_id', 'MC-1035', { status: 'Acknowledged' }).catch((e) => toast('Sync failed', 'warn', String(e.message || e)));
   };
+  MC.saveCertificate = function(course){
+    const p=MC.persona();
+    const body=`<div style="text-align:center;padding:20px 0"><h2 style="border:none;font-size:22px">Certificate of Completion</h2>
+      <p style="margin:24px 0 8px">This certifies that</p><p style="font-size:20px;font-weight:700;color:#102050;margin:0">${p.name}</p>
+      <p style="margin:16px 0 8px">has successfully completed</p><p style="font-size:16px;font-weight:600;margin:0">${course}</p>
+      <p style="margin:28px 0 0;font-size:12px;color:#777">Miriam College \u2014 Learning & Development</p></div>`;
+    MC.saveHtmlFile(('Certificate_'+course).replace(/[^\w]+/g,'_')+'.html','Certificate of Completion',body);
+  };
   MC.empFileClaim = function(){
     modal({title:'File a benefit claim',body:`
       <div class="field"><label>Benefit program</label><select class="select" id="clBenefit"><option>HMO — Maxicare</option><option>Educational Benefit</option><option>Wellness Program</option></select></div>
@@ -288,7 +296,7 @@
     };
   };
   function course(t,m,status,tone){
-    const action = status==='Completed'?`<button class="btn sm" onclick="UI.toast('Certificate','ok','${t}')">${icon('download')}</button>`:`<button class="btn sm primary" onclick="UI.toast('Enrolled','ok','${t}')">Enroll</button>`;
+    const action = status==='Completed'?`<button class="btn sm" onclick="MC.saveCertificate('${t}')">${icon('download')}</button>`:`<button class="btn sm primary" onclick="UI.toast('Enrolled','ok','${t}')">Enroll</button>`;
     return `<div class="cl-row" style="padding:11px 14px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('gradCap')}</div><div style="flex:1"><b style="font-size:13px">${t}</b><div class="muted" style="font-size:11.5px">${m}</div></div>${badge(status)}${action}</div>`;
   }
 
