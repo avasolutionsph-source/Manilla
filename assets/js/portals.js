@@ -21,7 +21,7 @@
       <div class="hero">
         <div class="between" style="align-items:flex-start">
           <div><div class="portal-tag" style="background:rgba(255,255,255,.14);color:#e8d59a">${icon('userCheck')} Self-Service</div>
-            <h2 style="margin-top:12px">Good day, Roberto 👋</h2>
+            <h2 style="margin-top:12px">Good day, Roberto</h2>
             <p>Welcome to your Miriam College employee portal — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}. You're clocked in since <b style="color:#fff">07:45 AM</b> (Facial Biometric).</p></div>
         </div>
         <div class="hero-stats">
@@ -150,9 +150,9 @@
             <div class="card card-pad mt-lg" style="background:var(--navy-900);color:#fff"><div class="between"><span style="color:#c7d2ef">NET PAY</span><b style="font-size:21px;color:#fff">${fmt.peso2(it.net)}</b></div></div>
             <button class="btn primary block mt-lg" onclick="MC.viewPayslip('MC-1035')">${icon('eye')} View full payslip</button>
           </div></div>
-        <div class="card"><div class="card-head"><h3>Payslip history</h3><button class="btn sm" onclick="UI.toast('2316','ok','Your BIR 2316 is ready')">${icon('scroll')} BIR 2316</button></div>
+        <div class="card"><div class="card-head"><h3>Payslip history</h3><button class="btn sm" onclick="MC.save2316('MC-1035')">${icon('scroll')} BIR 2316</button></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Period</th><th>Gross</th><th>Net</th><th></th></tr></thead><tbody>
-            ${hist.map(([p,g,n])=>`<tr><td><b style="font-size:12.8px">${p}</b></td><td>${fmt.peso(g)}</td><td><b style="color:var(--ink)">${fmt.peso(n)}</b></td><td><button class="btn sm" onclick="UI.toast('Downloaded','ok','Payslip · ${p}')">${icon('download')}</button></td></tr>`).join('')}
+            ${hist.map(([p,g,n])=>`<tr><td><b style="font-size:12.8px">${p}</b></td><td>${fmt.peso(g)}</td><td><b style="color:var(--ink)">${fmt.peso(n)}</b></td><td><button class="btn sm" onclick="MC.savePayslip('MC-1035','${p}')">${icon('download')}</button></td></tr>`).join('')}
           </tbody></table></div></div>
       </div>`,
     };
@@ -186,6 +186,39 @@
         </div>
       </div>`,
     };
+  };
+  // ---- Real file generation (payslip / 2316) ----
+  MC.saveHtmlFile = function (filename, title, bodyHtml) {
+    const css = "body{font-family:'Inter',Arial,sans-serif;color:#1b1e2b;max-width:700px;margin:32px auto;padding:0 28px;font-size:13px;line-height:1.6}h1{font-size:18px;color:#102050;margin:0 0 2px}h2{font-size:13px;margin:22px 0 8px;color:#17295f;text-transform:uppercase;letter-spacing:.04em}table{width:100%;border-collapse:collapse;margin:6px 0}td,th{padding:7px 4px;border-bottom:1px solid #e4e8f0}.r{text-align:right}.tot{font-weight:700;border-top:2px solid #17295f}.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #17295f;padding-bottom:12px;margin-bottom:8px}@media print{body{margin:0}}";
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body><div class="hd"><div><h1>Miriam College</h1><div style="font-size:11px;color:#777">Human Resources Division · Quezon City</div></div><div style="text-align:right;font-size:11px;color:#555">${title}</div></div>${bodyHtml}<p style="margin-top:34px;font-size:10px;color:#999">System-generated document.</p></body></html>`;
+    const b = new Blob([html], { type: 'text/html' }); const u = URL.createObjectURL(b); const a = document.createElement('a');
+    a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000);
+    toast('Downloaded', 'ok', title + ' — open & print to PDF');
+  };
+  const peso2 = (v) => '₱' + Number(v || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  MC.savePayslip = function (empId, period) {
+    const it = (DB.payrollRun.items || []).find((x) => x.id === empId) || {}; const e = DB.empById(empId) || {};
+    const per = period || DB.payrollRun.period;
+    const body = `<h2>Payslip — ${per}</h2>
+      <table><tr><td>Employee</td><td class="r">${e.name || empId} (${empId})</td></tr><tr><td>Position</td><td class="r">${e.position || ''}</td></tr><tr><td>Pay date</td><td class="r">${DB.payrollRun.pay_date || ''}</td></tr></table>
+      <h2>Earnings</h2><table><tr><td>Basic pay</td><td class="r">${peso2(it.basic)}</td></tr><tr><td>Allowances</td><td class="r">${peso2(it.allow)}</td></tr><tr><td>Overtime</td><td class="r">${peso2(it.ot)}</td></tr><tr class="tot"><td>Gross</td><td class="r">${peso2(it.gross)}</td></tr></table>
+      <h2>Deductions</h2><table><tr><td>Withholding tax</td><td class="r">${peso2(it.tax)}</td></tr><tr><td>SSS</td><td class="r">${peso2(it.sss)}</td></tr><tr><td>PhilHealth</td><td class="r">${peso2(it.phic)}</td></tr><tr><td>Pag-IBIG</td><td class="r">${peso2(it.hdmf)}</td></tr><tr><td>Loans</td><td class="r">${peso2(it.loans)}</td></tr></table>
+      <table style="margin-top:12px"><tr class="tot" style="font-size:15px"><td>NET PAY</td><td class="r">${peso2(it.net)}</td></tr></table>`;
+    MC.saveHtmlFile(('Payslip_' + empId + '_' + per).replace(/[^\w]+/g, '_') + '.html', 'Payslip', body);
+  };
+  MC.save2316 = function (empId) {
+    const it = (DB.payrollRun.items || []).find((x) => x.id === empId) || {}; const e = DB.empById(empId) || {};
+    const ann = (v) => Number(v || 0) * 24;
+    const body = `<h2>BIR Form 2316 — Certificate of Compensation / Tax Withheld</h2>
+      <table><tr><td>Employee</td><td class="r">${e.name || empId}</td></tr><tr><td>TIN</td><td class="r">${e.tin || ''}</td></tr><tr><td>Taxable year</td><td class="r">${(DB.payrollRun.pay_date || '2026').slice(0, 4)}</td></tr></table>
+      <h2>Summary (annualized)</h2><table><tr><td>Gross compensation</td><td class="r">${peso2(ann(it.gross))}</td></tr><tr><td>Non-taxable (SSS/PhilHealth/Pag-IBIG)</td><td class="r">${peso2(ann(it.sss + it.phic + it.hdmf))}</td></tr><tr class="tot"><td>Tax withheld</td><td class="r">${peso2(ann(it.tax))}</td></tr></table>
+      <p style="margin-top:20px;font-size:11px;color:#777">This certifies that the above compensation was paid and the corresponding tax withheld per the Tax Code.</p>`;
+    MC.saveHtmlFile(('BIR_2316_' + empId).replace(/[^\w]+/g, '_') + '.html', 'BIR Form 2316', body);
+  };
+  MC.acknowledgeReview = function () {
+    const r = DB.reviews.find((x) => x.emp === 'MC-1035'); if (r) r.status = 'Acknowledged';
+    toast('Acknowledged', 'ok', 'Your acknowledgment was recorded');
+    if (window.MC && MC.db && MC.db.live()) MC.db.update('performance_reviews', 'emp_id', 'MC-1035', { status: 'Acknowledged' }).catch((e) => toast('Sync failed', 'warn', String(e.message || e)));
   };
   MC.empFileClaim = function(){
     modal({title:'File a benefit claim',body:`
@@ -225,7 +258,7 @@
       </div>
       <div class="card"><div class="card-head"><h3>My Individual Development Plan (IDP)</h3></div><div class="card-pad">
         <p style="font-size:13.5px;color:var(--ink-2);line-height:1.6;margin:0">Focus on cloud infrastructure certification (AWS Solutions Architect) and leadership readiness. Recommended: <b>Cloud Fundamentals</b> and <b>Leadership Track</b>. Target: complete certification by Q2 2027.</p>
-        <div class="row mt-lg wrap" style="gap:8px"><button class="btn primary" onclick="UI.toast('Acknowledged','ok','Your acknowledgment was recorded')">${icon('check')} Acknowledge evaluation</button><button class="btn" onclick="MC.go('emp_learning')">${icon('gradCap')} View recommended training</button></div>
+        <div class="row mt-lg wrap" style="gap:8px"><button class="btn primary" onclick="MC.acknowledgeReview()">${icon('check')} Acknowledge evaluation</button><button class="btn" onclick="MC.go('emp_learning')">${icon('gradCap')} View recommended training</button></div>
       </div></div>`,
     };
   };
@@ -495,7 +528,7 @@
     };
   };
   MC.acceptOffer = function(){
-    modal({title:'Accept job offer 🎉',sub:'IT Support Specialist',body:`
+    modal({title:'Accept job offer',sub:'IT Support Specialist',body:`
       <div style="text-align:center;padding:10px 0">
         <div class="ic" style="width:64px;height:64px;border-radius:18px;background:var(--surface-2);color:var(--brand);display:grid;place-items:center;margin:0 auto 16px">${icon('checkBig')}</div>
         <h3 style="font-size:18px">Welcome to Miriam College!</h3>
@@ -506,7 +539,7 @@
   MC.doAcceptOffer = function(){
     const a=DB.applicants.find(x=>x.id==='A-5543'); if(a)a.stage='Hired';
     if(MC.startOnboarding)MC.startOnboarding();
-    closeModal(); toast('Offer accepted 🎉','ok','Onboarding started — data transferred automatically');
+    closeModal(); toast('Offer accepted','ok','Onboarding started — data transferred automatically');
     if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id','A-5543',{stage:'Hired'}).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 

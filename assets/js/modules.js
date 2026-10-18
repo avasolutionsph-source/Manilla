@@ -31,7 +31,7 @@
     return {
       title: 'Dashboard', crumb: 'Overview · '+MC.state.campus,
       html: `
-      <div class="page-head"><div><div class="t">Good day, ${roleFirst()} 👋</div><div class="d">Here's what's happening across Miriam College HR today — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}.</div></div>
+      <div class="page-head"><div><div class="t">Good day, ${roleFirst()}</div><div class="d">Here's what's happening across Miriam College HR today — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}.</div></div>
         <div class="row wrap"><button class="btn" id="dExport">${icon('download')} Export</button><button class="btn primary" id="dQuick">${icon('plus')} Quick action</button></div></div>
 
       <div class="grid g-4 mb">
@@ -142,7 +142,7 @@
   function pipelineHTML(){
     return `<div class="mb">${aiBanner(`<b>AI screening active.</b> 89 resumes parsed and ranked by competency match this period. Top candidate per role is highlighted. Rankings assist — the hiring committee decides.`)}</div>
     <div class="kanban" id="kanban">
-      ${STAGES().map(s=>{ const list = DB.applicants.filter(a=>a.stage===s);
+      ${STAGES().concat([...new Set(DB.applicants.map(a=>a.stage))].filter(x=>x&&!STAGES().includes(x))).map(s=>{ const list = DB.applicants.filter(a=>a.stage===s);
         return `<div class="kcol" data-stage="${s}"><div class="kcol-head"><span>${s}</span><span class="cnt">${list.length}</span></div>
         <div class="kcol-body" data-stage="${s}">${list.map(a=>applicantCard(a)).join('')||`<div style="text-align:center;color:var(--ink-3);font-size:12px;padding:16px 0">Drop here</div>`}</div></div>`;
       }).join('')}
@@ -312,23 +312,23 @@
       <div class="hint mt" style="text-align:center">${icon('shield')} AI ranking is advisory — selection decisions require authorized human approval.</div>
     </div>`});
   };
-  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const S=STAGES(); const i=S.indexOf(a.stage); if(i<S.length-1){a.stage=S[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage='Offer';toast('Candidate at offer stage','ok');} if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:a.stage}).catch(e=>toast('Sync failed','warn',String(e.message||e))); closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
+  MC.advanceStage = function(id){ const a=DB.applicants.find(x=>x.id===id); const S=STAGES(); const i=S.indexOf(a.stage); if(i===-1){a.stage=S[0]||a.stage;toast('Moved to pipeline','ok',`${a.name} → ${a.stage}`);} else if(i<S.length-1){a.stage=S[i+1];toast('Stage advanced','ok',`${a.name} → ${a.stage}`);} else {a.stage=S[S.length-1]||a.stage;toast('Candidate at final stage','ok');} if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:a.stage}).catch(e=>toast('Sync failed','warn',String(e.message||e))); closeDrawer(); if(MC.state.route==='recruitment'&&MC.recruitTab==='pipeline')MC.go('recruitment'); };
   MC.scheduleInterview = function(id){ const a=DB.applicants.find(x=>x.id===id); closeDrawer();
     modal({title:'Schedule interview',sub:a.name+' · '+a.role,body:`
       <div class="form-row"><div class="field"><label>Date</label><input class="input" type="date" value="2026-10-20"></div><div class="field"><label>Time</label><input class="input" type="time" value="10:00"></div></div>
-      <div class="field"><label>Interview type</label><select class="select"><option>Panel (on-site)</option><option>Virtual (video)</option><option>Teaching demo</option></select></div>
+      <div class="field"><label>Interview type</label><select class="select">${(window.MC&&MC.config?MC.config.get('recruitment.interviewTypes',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div>
       <div class="field"><label>Panel members</label><input class="input" value="Dean CAS, HR, Dept. Chair"></div>
       <div class="field"><label>Notes to candidate</label><textarea class="input">Please bring credentials and a 15-min teaching demo.</textarea></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="UI.closeModal();UI.toast('Interview scheduled','ok','Invite sent to ${a.email}')">${icon('calendar')} Schedule & notify</button>`});
   };
   MC.makeOffer = function(id){ const a=DB.applicants.find(x=>x.id===id); closeDrawer();
     modal({title:'Generate job offer',sub:a.name,body:`
-      <div class="form-row"><div class="field"><label>Position</label><input class="input" value="${a.role}"></div><div class="field"><label>Employment type</label><select class="select">${(window.MC&&MC.config?MC.config.get('recruitment.offerEmploymentTypes',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
+      <div class="form-row"><div class="field"><label>Position</label><input class="input" value="${a.role}"></div><div class="field"><label>Employment type</label><select class="select" id="offerType">${(window.MC&&MC.config?MC.config.get('recruitment.offerEmploymentTypes',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div></div>
       <div class="form-row"><div class="field"><label>Monthly rate</label><input class="input" value="₱45,000"></div><div class="field"><label>Start date</label><input class="input" type="date" value="2026-11-03"></div></div>
       <div class="alertbar info mt">${icon('info')} Offer will route through the approval workflow: Dept. Head → HR → VP for Administration.</div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.confirmOffer('${a.id}')">${icon('send')} Generate & route</button>`});
   };
-  MC.confirmOffer = function(id){ const a=DB.applicants.find(x=>x.id===id); if(a)a.stage='Offer'; closeModal(); toast('Job offer routed for approval','ok',`${a?a.name:id} · Probationary`); if(MC.state.route==='recruitment')MC.go('recruitment'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:'Offer'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
+  MC.confirmOffer = function(id){ const a=DB.applicants.find(x=>x.id===id); const et=(document.getElementById('offerType')||{}).value||'Probationary'; if(a)a.stage='Offer'; closeModal(); toast('Job offer routed for approval','ok',`${a?a.name:id} · ${et}`); if(MC.state.route==='recruitment')MC.go('recruitment'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('applicants','id',id,{stage:'Offer'}).catch(e=>toast('Sync failed','warn',String(e.message||e))); };
   MC.aiScreen = function(id){
     const a = DB.applicants.find(x=>x.id===id); if(!a) return;
     modal({title:'AI Resume Screening',sub:a.name+' · '+a.role,size:'lg',body:`
@@ -415,7 +415,7 @@
           <div class="subtabs" id="eTabs"><div class="subtab active" data-tab="current">Current (15)</div><div class="subtab" data-tab="former">Former (3)</div></div>
           <div class="spacer"></div>
           <div class="search" style="width:230px"><span>${icon('search')}</span><input id="eSearch" placeholder="Search name, ID, position…"></div>
-          <select class="select" id="eType" style="width:150px"><option>All</option><option>Regular</option><option>Faculty</option><option>Probationary</option><option>Contractual</option></select>
+          <select class="select" id="eType" style="width:150px"><option>All</option>${(window.MC&&MC.config?MC.config.get('employment.types',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select>
         </div>
         <div class="table-wrap"><table class="tbl" id="eTable"></table></div>
       </div>`,
@@ -573,7 +573,7 @@
       <div class="grid mb" style="grid-template-columns:1fr 1.6fr">
         <div class="card"><div class="card-head"><h3>Today's status</h3></div><div class="card-pad">${charts.donut(statusDonut,{center:present+late+leave+'',centerSub:'logged'})}${charts.legend(statusDonut)}
           <div class="mt-lg"><div class="muted" style="font-size:11.5px;margin-bottom:8px">Capture methods</div>
-          ${['M10 Fingerprint','Facial Biometric','Web Portal','Mobile (GPS)'].map(m=>`<div class="chip" style="margin:0 6px 6px 0">${icon('fingerprint')} ${m}</div>`).join('')}</div></div></div>
+          ${(window.MC&&MC.config?MC.config.get('timekeeping.captureModes',['M10 Fingerprint','Facial Biometric','Web Portal','Mobile (GPS)']):[]).map(m=>`<div class="chip" style="margin:0 6px 6px 0">${icon('fingerprint')} ${m}</div>`).join('')}</div></div></div>
         <div class="card"><div class="card-head"><div><h3>Live attendance log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · auto-synced</div></div><span class="chip" style="color:var(--ink-2)">${icon('activity')} Live</span></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Time In</th><th>Method</th><th>Status</th></tr></thead>
           <tbody>${DB.attendanceToday.map(a=>{const e=DB.empById(a.id);return `<tr><td class="cell-emp">${e?avatar(e):''}<div><b>${e?e.name:a.id}</b><span>${e?e.dept:''}</span></div></td><td><b>${a.timeIn}</b></td><td class="muted"><span class="chip">${a.mode}</span></td><td>${badge(a.status)}</td></tr>`;}).join('')}</tbody></table></div></div>
@@ -629,7 +629,7 @@
     const prefix=lt.code||'LV';
     const _aseq=DB.applications.filter(a=>String(a.id).indexOf(prefix+"-")===0).map(a=>parseInt(String(a.id).replace(/\D/g,""),10)||0); const id=`${prefix}-${String(Math.max(0,..._aseq)+1).padStart(4,"0")}`;
     let days=Math.round((new Date(to)-new Date(from))/86400000)+1; if(!(days>=0))days=1;
-    const isHours=(type==='Overtime'||type==='Work Hours Offset');
+    const isHours=(lt.code==='OT'||lt.code==='WO');
     const filed=new Date().toISOString().slice(0,10);
     DB.applications.unshift({ id, emp:empId, empName:p.name, type, from, to, days:isHours?0:days, hours:isHours?8:null, status:'Pending', filed, approver:'Supervisor', reason });
     closeModal();
@@ -687,13 +687,13 @@
   };
   MC.runPayroll = function(){
     modal({title:'Run payroll',sub:'Simulation → validation → reconciliation',body:`
-      <div class="form-row"><div class="field"><label>Payroll group</label><select class="select"><option>Monthly-Paid Regular</option><option>Faculty (Semestral)</option><option>Contractual</option></select></div>
+      <div class="form-row"><div class="field"><label>Payroll group</label><select class="select">${(window.MC&&MC.config?MC.config.get('payroll.groups',[]):[]).map(x=>`<option>${x}</option>`).join('')}</select></div>
         <div class="field"><label>Cutoff</label><select class="select"><option>Oct 1–15, 2026 (2nd)</option><option>Oct 16–31, 2026</option></select></div></div>
       <div id="runSteps"></div>
       <div class="field mt"><label>Include</label><div class="row wrap" style="gap:8px"><span class="chip">${icon('check')} Approved leaves</span><span class="chip">${icon('check')} Overtime</span><span class="chip">${icon('check')} Loan deductions</span><span class="chip">${icon('check')} Allowances</span></div></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="runGo">${icon('zap')} Run simulation</button>`});
     $('#runGo').addEventListener('click',()=>{
-      const steps=['Pulling approved timekeeping inputs…','Computing gross, OT, holiday & night differential…','Applying tax, SSS, PhilHealth, Pag-IBIG & loans…','AI validation & anomaly scan…','Reconciliation complete ✓'];
+      const steps=['Pulling approved timekeeping inputs…','Computing gross, OT, holiday & night differential…','Applying tax, SSS, PhilHealth, Pag-IBIG & loans…','AI validation & anomaly scan…','Reconciliation complete'];
       const box=$('#runSteps'); box.innerHTML=''; $('#runGo').disabled=true; $('#runGo').innerHTML=`${icon('refresh')} Running…`;
       let i=0; const tick=()=>{ if(i<steps.length){ box.insertAdjacentHTML('beforeend',`<div class="cl-row" style="padding:9px 13px;margin-bottom:7px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('check')}</div><div style="font-size:12.5px">${steps[i]}</div></div>`); i++; setTimeout(tick,500);} else { $('#runGo').innerHTML=`${icon('check')} Done`; setTimeout(()=>{closeModal();toast('Payroll simulation complete','ok','412 employees · ₱7.44M net · 0 critical anomalies');},600);} };
       tick();
@@ -724,7 +724,7 @@
         <div class="between"><span class="hd" style="color:var(--brand)">${icon('shield')} Pre-post validation</span>${badge(dr===cr?'Ready to post':'Blocked',dr===cr?'green':'red')}</div>
         <div class="mt">${vcheck(dr===cr,`Entry is balanced — debits ${fmt.peso(dr)} = credits ${fmt.peso(cr)}`)}${vcheck(true,'All accounts mapped to the SAP chart of accounts')}${vcheck(true,'Posting period matches the payroll cutoff (Oct 1–15, 2026)')}${vcheck(true,'No duplicate journal entry for this period')}${vcheck(true,'Secure system-to-system authentication established')}</div>
       </div>`,
-      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" ${dr!==cr?'disabled':''} onclick="UI.closeModal();UI.toast('Posted to SAP','ok','JE-2026-10-204 · balanced ✓')">${icon('arrowRight')} Post to SAP</button>`});
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" ${dr!==cr?'disabled':''} onclick="UI.closeModal();UI.toast('Posted to SAP','ok','JE-2026-10-204 · balanced')">${icon('arrowRight')} Post to SAP</button>`});
   };
 
   /* ========================================================

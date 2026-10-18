@@ -97,8 +97,9 @@ MC.ROLES = {
     ],
   },
 };
-MC.allowedRoutes = () => MC.ROLES[MC.state.role].nav.flatMap(g => g.items.map(i => i.r));
-MC.homeRoute = () => MC.ROLES[MC.state.role].nav[0].items[0].r;
+MC.featEnabled = (r) => { const f=(window.MC&&MC.config&&MC.config.get)?MC.config.get('features',{}):{}; const m={command_center:'command',budget_sim:'budget'}; return f[m[r]||r]!==false; };
+MC.allowedRoutes = () => MC.ROLES[MC.state.role].nav.flatMap(g => g.items.map(i => i.r)).filter(MC.featEnabled);
+MC.homeRoute = () => { const all=MC.ROLES[MC.state.role].nav.flatMap(g => g.items.map(i => i.r)); return all.find(MC.featEnabled) || all[0]; };
 MC.persona = () => MC.PERSONA[MC.state.role];
 
 /* ============================================================
@@ -265,7 +266,7 @@ MC.renderApp = function () {
         <div class="spacer"></div>
         <div class="search" id="searchBox">${icon('search')}<input placeholder="${searchPlaceholder()}" id="globalSearch"><kbd>Ctrl K</kbd></div>
         <button class="icon-btn" id="btnNotif">${icon('bell')}<span class="dot"></span></button>
-        <button class="icon-btn" id="btnHelp" title="AI Assistant">${icon('sparkles')}</button>
+        ${(window.MC&&MC.config&&MC.config.get('features',{}).ai_assistant===false)?'':`<button class="icon-btn" id="btnHelp" title="AI Assistant">${icon('sparkles')}</button>`}
         <div class="userchip" id="userChip">
           <div class="ava" style="background:${p.color}">${p.initials}</div>
           <div><b>${p.name}</b><span>${MC.state.role}</span></div>
@@ -283,7 +284,7 @@ MC.renderApp = function () {
   $('#btnMenu').addEventListener('click', () => $('.app').classList.toggle('nav-open'));
   $('#navBackdrop').addEventListener('click', closeMobileNav);
   $('#btnNotif').addEventListener('click', () => MC.openNotifications());
-  $('#btnHelp').addEventListener('click', () => MC.openAI());
+  $('#btnHelp')?.addEventListener('click', () => MC.openAI());
   $('#aiFab')?.addEventListener('click', () => MC.openAI());
   $('#userChip').addEventListener('click', () => MC.openUserMenu());
   if ($('#campusPill')) $('#campusPill').addEventListener('click', () => MC.openCampusMenu());
@@ -335,7 +336,7 @@ MC.notifSets = {
     { icon:'gift', color:'violet', title:'Educational benefit enrollment', body:'Window closes Nov 15', time:'Yesterday', unread:false },
   ],
   'Applicant':[
-    { icon:'badgeCheck', color:'green', title:'You received a job offer! 🎉', body:'IT Support Specialist · review your offer', time:'30 min ago', unread:true },
+    { icon:'badgeCheck', color:'green', title:'You received a job offer!', body:'IT Support Specialist · review your offer', time:'30 min ago', unread:true },
     { icon:'calendar', color:'blue', title:'Interview completed', body:'Thank you for coming in', time:'3 days ago', unread:false },
   ],
 };
@@ -373,7 +374,7 @@ MC.openUserMenu = function () {
 MC.openCampusMenu = function () {
   const opts = ['All Campuses', ...DB.campuses];
   const html = `<div style="width:220px"><div class="menu-head"><b>Campus</b></div>
-    ${opts.map(c => `<div class="menu-item" data-c="${c}">${icon('mapPin')} ${c}${c===MC.state.campus?' ✓':''}</div>`).join('')}</div>`;
+    ${opts.map(c => `<div class="menu-item" data-c="${c}">${icon('mapPin')} ${c}${c===MC.state.campus?' '+icon('check'):''}</div>`).join('')}</div>`;
   const m = popover($('#campusPill'), html, 'left');
   m.addEventListener('click', e => { const c = e.target.closest('[data-c]'); if (!c) return; MC.state.campus = c.dataset.c; $('#campusLbl').textContent = c.dataset.c; closePopover(); toast('Campus filter updated', 'info', c.dataset.c); MC.go(MC.state.route); });
 };

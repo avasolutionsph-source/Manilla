@@ -408,13 +408,36 @@
       ${sig}
       <div class="doc-gen-note" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:34px;border-top:1px solid #eee;padding-top:16px">
         <button class="btn sm" onclick="this.closest('.paper').querySelectorAll('p,h3,.doc-title').forEach(el=>el.contentEditable=true);UI.toast('Editing enabled','info','Click text to edit, then issue')">${icon('edit')} Edit</button>
-        <button class="btn sm" onclick="UI.toast('Downloaded','ok','${title} · PDF')">${icon('download')} Download PDF</button>
-        <button class="btn sm" onclick="UI.toast('Sent to printer','ok')">${icon('printer')} Print</button>
+        <button class="btn sm" onclick="MC.exportDoc(this,'download')">${icon('download')} Download</button>
+        <button class="btn sm" onclick="MC.exportDoc(this,'print')">${icon('printer')} Print</button>
         <button class="btn sm primary" onclick="UI.toast('Routed for signature','ok','Sent to HR Director for e-signature')">${icon('send')} Route for signature</button>
       </div></div>`;
   }
 
   MC._docPaper = docPaper; // exposed for self-test
+
+  // Turn the generated document into a real, printable/downloadable file.
+  MC.exportDoc = function (btn, mode) {
+    const paper = btn.closest('.paper'); if (!paper) return;
+    const clone = paper.cloneNode(true);
+    clone.querySelectorAll('.doc-gen-note, button').forEach((el) => el.remove());
+    const title = ((paper.querySelector('.doc-title') || {}).textContent || 'Document').trim();
+    const css = "body{font-family:Georgia,'Times New Roman',serif;color:#1b1b1b;line-height:1.72;max-width:720px;margin:40px auto;padding:0 40px}h2{color:#102050;font-size:20px;margin:0}h3{text-align:center;text-transform:uppercase;letter-spacing:.08em;font-size:15px;margin:26px 0 22px}p{text-align:justify;margin:0 0 15px}.paper-lh{display:flex;align-items:center;gap:15px;border-bottom:2.5px solid #17295f;padding-bottom:15px;margin-bottom:8px}.doc-ref{display:flex;justify-content:space-between;font-size:11.5px;color:#555;margin:14px 0 6px}.addr{font-size:10px;color:#777}.sig{margin-top:46px}img{max-width:56px;height:auto}@media print{body{margin:0}}";
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body>${clone.innerHTML}</body></html>`;
+    if (mode === 'print') {
+      const w = window.open('', '_blank');
+      if (!w) { toast('Pop-up blocked', 'warn', 'Allow pop-ups to print'); return; }
+      w.document.write(html); w.document.close(); w.focus();
+      setTimeout(() => { try { w.print(); } catch (e) {} }, 350);
+      toast('Opening print dialog', 'ok', title);
+    } else {
+      const b = new Blob([html], { type: 'text/html' });
+      const u = URL.createObjectURL(b); const a = document.createElement('a');
+      a.href = u; a.download = title.replace(/[^\w]+/g, '_') + '.html'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 1000);
+      toast('Downloaded', 'ok', title + ' — open & print to PDF');
+    }
+  };
 
   MC.pages.compliance = function () {
     const toneOf = s => s==='Filed'?'green':s==='Ready'?'amber':'blue';
