@@ -136,11 +136,12 @@ MC.renderLogin = function () {
         <div class="row" style="gap:11px;margin-bottom:24px">${SEAL}<b style="font-size:15px">Miriam College HRIS</b></div>
         <h2>Sign in</h2>
         <div class="sub">Sign in with your Miriam College HRIS account.</div>
-        <div class="field"><label for="loginEmail">Email</label><input class="input" id="loginEmail" type="email" placeholder="you@mc.edu.ph" autocomplete="username"></div>
+        <div class="field"><label for="loginEmail">Email</label><input class="input" id="loginEmail" type="email" placeholder="you@mc.edu.ph" value="hr@mc.edu.ph" autocomplete="username"></div>
         <div class="field"><label for="loginPass">Password</label><input class="input" id="loginPass" type="password" placeholder="Your password" autocomplete="current-password"></div>
         <div id="loginErr" class="hint" style="color:var(--red);min-height:15px;margin:-6px 0 8px"></div>
         <button class="btn primary block" id="loginBtn">${icon('lock')} <span id="loginLbl">Sign in</span></button>
         <div class="mfa-note">${icon('shield')} Role-based access control · Multi-factor authentication ready</div>
+        <div class="hint" style="margin-top:8px;text-align:center;line-height:1.55">Demo — password <b>Miriam2026!</b> for <b>hr@</b> · exec@ · supervisor@ · employee@ · applicant@ <span style="color:var(--ink-3)">(…@mc.edu.ph)</span></div>
         <div style="display:flex;align-items:center;gap:10px;margin:20px 0 14px;color:var(--ink-3);font-size:11.5px"><span style="flex:1;height:1px;background:var(--line)"></span>or explore a demo role<span style="flex:1;height:1px;background:var(--line)"></span></div>
         <div class="role-grid" id="roleGrid">
           ${ROLES_UI.map(r => `<button class="role-opt" data-role="${r.key}">
@@ -236,11 +237,24 @@ MC.renderKioskScanReset = function(){
 };
 function loginEmailFor(){ return { 'HR Administrator':'nracho@mc.edu.ph','Management':'rlaurel@mc.edu.ph','Supervisor':'jvelasco@mc.edu.ph','Employee':'rdizon@mc.edu.ph','Applicant':'diane.castro@email.com' }[MC.state.role]; }
 
+// Hardcoded demo credentials — the sign-in form works out of the box for
+// evaluation. Real Supabase Auth still applies to any provisioned account.
+const DEMO_ACCOUNTS = {
+  'hr@mc.edu.ph':         { password: 'Miriam2026!', role: 'HR Administrator' },
+  'exec@mc.edu.ph':       { password: 'Miriam2026!', role: 'Management' },
+  'supervisor@mc.edu.ph': { password: 'Miriam2026!', role: 'Supervisor' },
+  'employee@mc.edu.ph':   { password: 'Miriam2026!', role: 'Employee' },
+  'applicant@mc.edu.ph':  { password: 'Miriam2026!', role: 'Applicant' },
+};
+MC.DEMO_ACCOUNTS = DEMO_ACCOUNTS;
 MC.signIn = async function () {
   const email = ($('#loginEmail') || {}).value || '';
   const pass = ($('#loginPass') || {}).value || '';
   const err = $('#loginErr');
   if (!email || !pass) { if (err) err.textContent = 'Enter your email and password.'; return; }
+  // Demo credentials (client-side) — instant access without provisioning.
+  const demo = DEMO_ACCOUNTS[email.trim().toLowerCase()];
+  if (demo && demo.password === pass) { MC.state.role = demo.role; MC.authedLogin = true; MC.enterApp(); return; }
   const btn = $('#loginBtn'), lbl = $('#loginLbl');
   if (btn) btn.disabled = true; if (lbl) lbl.textContent = 'Signing in…'; if (err) err.textContent = '';
   try {
