@@ -189,7 +189,7 @@
     const q = /PhD/i.test(f.qualif) && !/cand/i.test(f.qualif) ? 30 : /PhD.*cand/i.test(f.qualif) ? 23 : /MA.*cand|MS.*cand/i.test(f.qualif) ? 13 : /MA|MS|Master/i.test(f.qualif) ? 19 : 15;
     const t = Math.round((f.teaching/5)*25);
     const s = f.service==='High'?20 : f.service==='Medium'?13 : 7;
-    let r = f.points - q - t - s; r = Math.max(0, Math.min(25, r));
+    let r = Math.min(25, (f.research||0)*2);
     return [
       {k:'Academic qualifications', v:q, max:30, note:f.qualif},
       {k:'Research & publications', v:r, max:25, note:f.research+' publications'},
@@ -197,12 +197,13 @@
       {k:'Institutional service', v:s, max:20, note:f.service+' involvement'}
     ];
   }
+  function rankTotal(f){ return rankParts(f).reduce((a,p)=>a+p.v,0); }
   function rankBreakdownHTML(empId){
-    const f=DB.facultyRanking.find(x=>x.emp===empId); const parts=rankParts(f); const TH=75;
+    const f=DB.facultyRanking.find(x=>x.emp===empId); const parts=rankParts(f); const fpts=parts.reduce((a,p)=>a+p.v,0); const TH=(window.MC&&MC.config?MC.config.get('performance.promotionThreshold',75):75);
     return `<div class="ai-analysis">
       <div class="between"><span class="hd" style="color:var(--brand)">${icon('award')} Ranking computation</span>${f.eligible?badge('Promotion-eligible','green'):badge('Not yet eligible','gray')}</div>
-      <div class="between mt" style="align-items:baseline"><span class="muted" style="font-size:12px">Total ranking points</span><b style="font-size:22px;color:${f.points>=TH?'var(--green)':'var(--amber)'}">${f.points}<span style="font-size:13px;color:var(--ink-3);font-weight:400"> / 100</span></b></div>
-      <div class="prog" style="margin-top:6px;height:7px"><i style="width:${f.points}%;background:${f.points>=TH?'var(--green)':'var(--amber)'}"></i></div>
+      <div class="between mt" style="align-items:baseline"><span class="muted" style="font-size:12px">Total ranking points</span><b style="font-size:22px;color:${fpts>=TH?'var(--green)':'var(--amber)'}">${fpts}<span style="font-size:13px;color:var(--ink-3);font-weight:400"> / 100</span></b></div>
+      <div class="prog" style="margin-top:6px;height:7px"><i style="width:${fpts}%;background:${fpts>=TH?'var(--green)':'var(--amber)'}"></i></div>
       <div class="muted" style="font-size:11px;margin-top:5px">Promotion threshold for ${f.next}: ${TH} points</div>
       <div class="muted" style="font-size:11.5px;margin-top:12px">Points are the sum of four criteria:</div>
       <div class="mt-sm">${parts.map(p=>{const pct=Math.round(p.v/p.max*100);return `<div class="cb-row">
@@ -648,7 +649,7 @@
       title:'Payroll & Compensation', crumb:'Payroll Management',
       html:`
       <div class="page-head"><div><div class="t">Payroll & Compensation</div><div class="d">${p.period} · ${p.cutoff} · ${p.group}</div></div>
-        <div class="row wrap"><button class="btn" id="pJE">${icon('link')} Post to SAP</button><button class="btn primary" id="pRun">${icon('zap')} Run payroll</button></div></div>
+        <div class="row wrap"><button class="btn" onclick="MC.facultyPayroll()">${icon('award')} Faculty load</button><button class="btn" onclick="MC.leaveConversion()">${icon('coins')} Leave conversion</button><button class="btn" id="pJE">${icon('link')} Post to SAP</button><button class="btn primary" id="pRun">${icon('zap')} Run payroll</button></div></div>
 
       <div class="mb">${aiBanner(`<b>AI payroll validation:</b> 0 critical anomalies in this run. 1 advisory — an overtime entry 18% above the employee's 3-month average. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiPayrollDetail()">${icon('eye')} Why</button>`)}</div>
 
@@ -684,6 +685,40 @@
         $('#pJE2',root).addEventListener('click',MC.postJE);
       }
     };
+  };
+  MC.facultyPayroll = function(){
+    const cfg=(window.MC&&MC.config?MC.config.get('payroll.facultyLoad',{}):{});
+    modal({title:'Faculty load computation',sub:'Unit-based pay \u00b7 Higher Education',size:'lg',body:`
+      <div class="alertbar info mb">${icon('info')}<div style="flex:1">Higher-Education faculty pay is computed from encoded teaching units. Rates are configurable in Settings \u2192 Payroll.</div></div>
+      <div class="form-row"><div class="field"><label>Faculty type</label><select class="select" id="flType"><option>Permanent Faculty</option><option>Part-Time Faculty</option></select></div>
+        <div class="field"><label>Teaching units</label><input class="input" id="flUnits" type="number" value="18"></div></div>
+      <div class="form-row"><div class="field"><label>Rate / unit (\u20b1)</label><input class="input" id="flRate" type="number" value="${cfg.ratePerUnitHigherEd||1250}"></div>
+        <div class="field"><label>Part-time conversion factor</label><input class="input" id="flConv" type="number" step="0.1" value="${cfg.partTimeUnitConversion||1}"></div></div>
+      <div class="card card-pad mt" style="background:var(--navy-900);color:#fff" id="flResult"></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" id="flCalc">${icon('zap')} Compute</button>`});
+    const calc=()=>{ const g=id=>parseFloat((document.getElementById(id)||{}).value)||0; const type=(document.getElementById('flType')||{}).value;
+      const units=g('flUnits'), rate=g('flRate'), conv=g('flConv'), full=cfg.unitsPerFullLoad||24, over=cfg.overloadRatePerUnit||Math.round(rate*1.12);
+      const eff=type==='Part-Time Faculty'?units*conv:units; const base=Math.min(eff,full)*rate; const overload=Math.max(0,eff-full)*over; const monthly=base+overload;
+      const el=document.getElementById('flResult'); if(el) el.innerHTML=`<div class="between"><span style="color:#c7d2ef">Effective units</span><b style="color:#fff">${eff.toFixed(1)}</b></div><div class="between mt-sm"><span style="color:#c7d2ef">Base (within full load)</span><b style="color:#fff">\u20b1${base.toLocaleString()}</b></div><div class="between mt-sm"><span style="color:#c7d2ef">Overload</span><b style="color:#fff">\u20b1${overload.toLocaleString()}</b></div><div class="between mt" style="border-top:1px solid rgba(255,255,255,.2);padding-top:10px"><span style="color:#c7d2ef">MONTHLY PAY</span><b style="font-size:20px;color:#fff">\u20b1${monthly.toLocaleString()}</b></div>`;
+    };
+    const b=document.getElementById('flCalc'); if(b)b.addEventListener('click',calc); calc();
+  };
+  MC.leaveConversion = function(){
+    const cfg=(window.MC&&MC.config?MC.config.get('leave.conversion',{}):{}); const types=(cfg.convertibleTypes||['Vacation Leave','Sick Leave']);
+    modal({title:'Leave conversion',sub:'Convert unused leave credits to cash',size:'lg',body:`
+      <div class="alertbar info mb">${icon('info')}<div style="flex:1">Convertible: ${types.join(', ')} \u00b7 max ${cfg.maxConvertibleDays||10} days/yr \u00b7 retain ${cfg.minBalanceToKeep||5} days \u00b7 paid ${cfg.cutoff||'December payroll'}.</div></div>
+      <div class="form-row"><div class="field"><label>Leave type</label><select class="select" id="lcType">${types.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="field"><label>Current balance (days)</label><input class="input" id="lcBal" type="number" value="15"></div></div>
+      <div class="form-row"><div class="field"><label>Days to convert</label><input class="input" id="lcDays" type="number" value="5"></div>
+        <div class="field"><label>Daily rate (\u20b1)</label><input class="input" id="lcRate" type="number" value="2200"></div></div>
+      <div class="card card-pad mt" style="background:var(--navy-900);color:#fff" id="lcResult"></div>`,
+      foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" id="lcCalc">${icon('coins')} Compute cash value</button>`});
+    const calc=()=>{ const g=id=>parseFloat((document.getElementById(id)||{}).value)||0; const bal=g('lcBal'), days=g('lcDays'), rate=g('lcRate'); const maxD=cfg.maxConvertibleDays||10, keep=cfg.minBalanceToKeep||5;
+      const allowed=Math.max(0,Math.min(days,maxD,bal-keep)); const cash=allowed*rate;
+      const warn=days>allowed?`<div style="color:#ffb3b3;font-size:11.5px;margin-top:6px">Capped: max ${maxD}/yr, and must retain ${keep} days.</div>`:'';
+      const el=document.getElementById('lcResult'); if(el) el.innerHTML=`<div class="between"><span style="color:#c7d2ef">Convertible days</span><b style="color:#fff">${allowed}</b></div><div class="between mt" style="border-top:1px solid rgba(255,255,255,.2);padding-top:10px"><span style="color:#c7d2ef">CASH VALUE</span><b style="font-size:20px;color:#fff">\u20b1${cash.toLocaleString()}</b></div>${warn}`;
+    };
+    const b=document.getElementById('lcCalc'); if(b)b.addEventListener('click',calc); calc();
   };
   MC.runPayroll = function(){
     modal({title:'Run payroll',sub:'Simulation → validation → reconciliation',body:`
@@ -884,17 +919,20 @@
   };
   MC.submitReview = function(empId){ let r=DB.reviews.find(x=>x.emp===empId); const isNew=!r; if(isNew){r={emp:empId,cycle:'H2 2026',score:4.0,rating:'Satisfactory',status:'Submitted',idp:false,goals:5,met:4};DB.reviews.push(r);} else {r.status='Submitted';} closeModal(); toast('Evaluation submitted','ok','Routed for employee acknowledgment'); if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()){ (isNew?MC.db.insert('performance_reviews',{emp_id:empId,cycle:r.cycle,score:r.score,rating:r.rating,status:'Submitted',idp:false,goals:r.goals,met:r.met}):MC.db.update('performance_reviews','emp_id',empId,{status:'Submitted'})).catch(e=>toast('Sync failed','warn',String(e.message||e))); } };
   MC.computeRanking = function(){
+    const TH=(window.MC&&MC.config?MC.config.get('performance.promotionThreshold',75):75); let elig=0;
+    DB.facultyRanking.forEach(f=>{ f.points=rankTotal(f); f.eligible=f.points>=TH; if(f.eligible)elig++;
+      if(window.MC&&MC.db&&MC.db.live()) MC.db.update('faculty_ranking','emp_id',f.emp,{points:f.points,eligible:f.eligible}).catch(()=>{}); });
     MC.perfTab='ranking'; MC.go('performance');
-    setTimeout(()=>toast('Faculty ranking computed','ok','2 faculty promotion-eligible'),200);
+    setTimeout(()=>toast('Faculty ranking computed','ok',`${elig} promotion-eligible · points auto-derived from criteria`),200);
   };
   MC.promote = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId);
     modal({title:'Promotion recommendation',sub:e.name+' · '+f.current+' → '+f.next,body:`
       ${rankBreakdownHTML(empId)}
-      <div class="card card-pad mt-lg">${kv('Current rank',f.current)}${kv('Recommended rank',f.next)}${kv('Salary impact','+₱6,500 / mo (auto-staged)')}</div>
+      <div class="card card-pad mt-lg">${kv('Current rank',f.current)}${kv('Recommended rank',f.next)}${kv('Salary impact','+₱'+((window.MC&&MC.config?(MC.config.get('performance.rankSalaryIncrements',{})[f.next]||0):0)).toLocaleString()+' / mo (auto-staged)')}</div>
       <div class="field mt-lg"><label>Approval route</label><div class="row wrap" style="gap:7px"><span class="chip">Dean</span>${icon('arrowRight')}<span class="chip">Faculty Ranking Committee</span>${icon('arrowRight')}<span class="chip">VP Academic Affairs</span></div></div>`,
       foot:`<button class="btn" data-close>Cancel</button><button class="btn primary" onclick="MC.submitPromotion('${empId}')">${icon('send')} Route for approval</button>`});
   };
-  MC.submitPromotion = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId); if(f)f.eligible=false; closeModal(); toast('Promotion routed for approval','ok',`${e?e.name:empId} · pending committee review`); if(MC.perfTab){MC.perfTab='ranking';} if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()) MC.db.update('faculty_ranking','emp_id',empId,{eligible:false}).catch(er=>toast('Sync failed','warn',String(er.message||er))); };
+  MC.submitPromotion = function(empId){ const e=DB.empById(empId); const f=DB.facultyRanking.find(x=>x.emp===empId); const inc=(window.MC&&MC.config?(MC.config.get('performance.rankSalaryIncrements',{})[f?f.next:'']||0):0); if(f){f.current=f.next; f.eligible=false;} if(e&&f)e.rank=f.current; closeModal(); toast('Promotion approved','ok',`${e?e.name:empId} → ${f?f.current:''} · +₱${inc.toLocaleString()}/mo staged in payroll`); if(MC.perfTab){MC.perfTab='ranking';} if(MC.state.route==='performance')MC.go('performance'); if(window.MC&&MC.db&&MC.db.live()){ MC.db.update('faculty_ranking','emp_id',empId,{current_rank:f?f.current:null,eligible:false}).catch(er=>toast('Sync failed','warn',String(er.message||er))); if(e)MC.db.update('employees','id',empId,{rank:e.rank}).catch(()=>{}); } };
 
   /* ========================================================
      OFFBOARDING & CLEARANCE

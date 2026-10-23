@@ -14,8 +14,9 @@
     ['leave', 'Leave'], ['employment', 'Employment'], ['payroll', 'Payroll'], ['benefits', 'Benefits'],
     ['performance', 'Performance'], ['timekeeping', 'Timekeeping'], ['compliance', 'Compliance'],
     ['rbac', 'Roles & Access'], ['ai', 'AI Governance'], ['workflow', 'Workflows'], ['integrations', 'Integrations'],
-    ['advanced', 'Advanced (JSON)'],
+    ['migration', 'Data Migration'], ['advanced', 'Advanced (JSON)'],
   ];
+  let migRows = [];
   G.setTab = G.setTab || 'org';
 
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -147,9 +148,56 @@
     if (t === 'integrations') return strTitle('Integrations') +
       objTable('integrations', { title: 'Connected systems', cols: [{ k: 'name', label: 'System' }, { k: 'detail', label: 'Detail' }, { k: 'status', label: 'Status' }] });
 
+    if (t === 'migration') return migrationTool();
+
     if (t === 'advanced') return advancedEditor();
 
     return '';
+  }
+
+  function kvm(k, v) { return `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`; }
+  function migrationTool() {
+    const m = G.config.get('migration', {});
+    return `<div class="card mb"><div class="card-head"><div><h3>Migration parameters</h3><div class="sub">Legacy data migration scope — edit the full object under Advanced</div></div></div>
+        <div class="card-pad">${kvm('Source system', m.sourceSystem)}${kvm('Database', m.database)}${kvm('Records (est.)', m.recordsEstimate)}${kvm('Years available', m.yearsAvailable)}${kvm('Scope (school years, base)', m.scopeSchoolYears)}${kvm('Fields', (m.fields || []).join(', '))}${kvm('Cleansing', m.cleansing)}</div></div>
+      <div class="card"><div class="card-head"><div><h3>Employee import (CSV)</h3><div class="sub">Bulk-import 201 records. Header columns: id, name, position, dept, campus, emp_type, email, hired</div></div></div>
+        <div class="card-pad"><input type="file" id="migFile" accept=".csv,text/csv" class="input" style="padding:8px"><div id="migPreview" class="mt"></div></div></div>`;
+  }
+  function parseCSV(text) {
+    const lines = String(text || '').replace(/\r/g, '').split('\n').filter((l) => l.trim());
+    if (!lines.length) return { headers: [], rows: [] };
+    const split = (l) => { const out = []; let cur = '', q = false; for (let i = 0; i < l.length; i++) { const ch = l[i]; if (ch === '"') { if (q && l[i + 1] === '"') { cur += '"'; i++; } else q = !q; } else if (ch === ',' && !q) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
+    const headers = split(lines[0]).map((h) => h.trim().toLowerCase());
+    const rows = lines.slice(1).map((l) => { const c = split(l); const o = {}; headers.forEach((h, i) => { o[h] = (c[i] || '').trim(); }); return o; });
+    return { headers, rows };
+  }
+  function handleMigFile(file) {
+    if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const { headers, rows } = parseCSV(rd.result); migRows = rows;
+      const prev = document.getElementById('migPreview'); if (!prev) return;
+      if (!rows.length) { prev.innerHTML = '<div class="muted">No rows found in the file.</div>'; return; }
+      prev.innerHTML = `<div class="between mb"><b>${rows.length} record(s) parsed</b><button class="btn primary sm" data-migimport>${icon('upload')} Import ${rows.length} records</button></div>
+        <div class="table-wrap"><table class="tbl"><thead><tr>${headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, 8).map((r) => `<tr>${headers.map((h) => `<td>${esc(r[h])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${rows.length > 8 ? `<div class="hint">Showing first 8 of ${rows.length}.</div>` : ''}`;
+    };
+    rd.readAsText(file);
+  }
+  async function runMigImport() {
+    if (!migRows.length) { toast('No file', 'warn', 'Choose a CSV first'); return; }
+    let ok = 0, fail = 0; let seq = 9000;
+    for (const r of migRows) {
+      const id = (r.id || '').trim() || ('MC-' + (++seq));
+      const name = r.name || ''; if (!name) { fail++; continue; }
+      const rec = { id, name, position: r.position || '—', dept: r.dept || r.department || '', campus: r.campus || '', emp_type: r.emp_type || r.type || 'Regular', status: 'Active', email: r.email || '', hired: (r.hired || '').trim() || null };
+      try {
+        if (window.DB && DB.employees && !DB.empById(id)) DB.employees.push({ id, name, position: rec.position, dept: rec.dept, campus: rec.campus, type: rec.emp_type, status: 'Active', email: rec.email, hired: rec.hired, sg: '—', rank: '—', supervisor: '—', contractEnds: null, color: DB.colorFor(name), initials: DB.initials(name) });
+        if (G.db && G.db.live()) await G.db.insert('employees', rec);
+        ok++;
+      } catch (e) { fail++; }
+    }
+    toast('Migration complete', 'ok', `${ok} imported${fail ? ', ' + fail + ' skipped' : ''}`);
+    migRows = []; paint();
   }
 
   // Every config key, editable as raw JSON — guarantees 100% configurability.
@@ -218,6 +266,7 @@
   /* ---------------- delegated handlers ---------------- */
   function onClick(e) {
     const root = document.getElementById('stBody'); if (!root) return;
+    if (e.target.closest('[data-migimport]')) { runMigImport(); return; }
     const add = e.target.closest('[data-add]');
     if (add) { const k = add.dataset.add; const inp = document.getElementById('add-' + k); const v = (inp.value || '').trim(); if (!v) return; const arr = G.config.get(k, []); arr.push(v); persist(k, arr, 'Added'); return; }
     const del = e.target.closest('[data-del]');
@@ -240,6 +289,7 @@
     if (e.target.closest('[data-savewf]')) { const wf = G.config.get('workflows.approvals', []); root.querySelectorAll('[data-wf]').forEach((inp) => { const i = +inp.dataset.wf; if (wf[i]) wf[i].steps = inp.value.split(/→|,/).map((s) => s.trim()).filter(Boolean); }); persist('workflows.approvals', wf, 'Workflow saved'); return; }
   }
   function onChange(e) {
+    if (e.target && e.target.id === 'migFile') { handleMigFile(e.target.files && e.target.files[0]); return; }
     const flag = e.target.closest('[data-flag]');
     if (flag) { const k = flag.dataset.flag; const obj = G.config.get(k, {}); obj[flag.dataset.k] = flag.checked; persist(k, obj, flag.checked ? 'Enabled' : 'Disabled'); }
   }

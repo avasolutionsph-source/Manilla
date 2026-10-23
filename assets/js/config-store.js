@@ -40,14 +40,24 @@ MC.CONFIG_DEFAULTS = {
     { name: 'Vacation Leave', code: 'VL', paid: true, maxDays: 15 },
     { name: 'Sick Leave', code: 'SL', paid: true, maxDays: 15 },
     { name: 'Official Business', code: 'OB', paid: true, maxDays: 0 },
-    { name: 'Overtime', code: 'OT', paid: true, maxDays: 0 },
-    { name: 'Work Hours Offset', code: 'WO', paid: true, maxDays: 0 },
-    { name: 'Maternity Leave', code: 'ML', paid: true, maxDays: 105 },
-    { name: 'Paternity Leave', code: 'PL', paid: true, maxDays: 7 },
-    { name: 'Solo Parent Leave', code: 'SPL', paid: true, maxDays: 7 },
-    { name: 'Bereavement Leave', code: 'BL', paid: true, maxDays: 3 },
+    { name: 'Overtime', code: 'OT', paid: true, maxDays: 0, convertible: false },
+    { name: 'Work Hours Offset', code: 'WO', paid: true, maxDays: 0, convertible: false },
+    { name: 'Maternity Leave', code: 'ML', paid: true, maxDays: 105, convertible: false },
+    { name: 'Paternity Leave', code: 'PL', paid: true, maxDays: 7, convertible: false },
+    { name: 'Solo Parent Leave', code: 'SPL', paid: true, maxDays: 7, convertible: false },
+    { name: 'Bereavement Leave', code: 'BL', paid: true, maxDays: 3, convertible: false },
   ],
   'leave.defaultApprover': 'Immediate Supervisor',
+  // Convertible leave -> cash (Miriam leave credits are convertible)
+  'leave.conversion': {
+    enabled: true,
+    convertibleTypes: ['Vacation Leave', 'Sick Leave'],
+    maxConvertibleDays: 10,           // max days convertible per year
+    rateBasis: 'daily rate',          // cash value = unused days x daily rate
+    minBalanceToKeep: 5,              // must retain this balance
+    paidInCash: true,
+    cutoff: 'December payroll',
+  },
 
   /* ---- Payroll ---- */
   'payroll.statutory': {
@@ -55,9 +65,18 @@ MC.CONFIG_DEFAULTS = {
     pagibigEmployee: 200, pagibigRate: 2.0, taxRegime: 'TRAIN Law (2023)',
     nightDiffRate: 10, otRegularRate: 125, otRestDayRate: 130, holidayRate: 200,
   },
-  'payroll.groups': ['Monthly-Paid Regular', 'Daily-Paid', 'Faculty (per load)', 'Contractual'],
+  'payroll.groups': ['Monthly-Paid Regular', 'Daily-Paid', 'Permanent Faculty', 'Part-Time Faculty (per load)', 'Project-Based', 'Consultant', 'Contractual'],
   'payroll.cutoffs': ['1st Cutoff (1–15)', '2nd Cutoff (16–EOM)'],
   'payroll.thirteenthMonth': { enabled: true, releaseMonth: 'December' },
+  // Faculty load-based computation (Higher Education encodes units)
+  'payroll.facultyLoad': {
+    ratePerUnitHigherEd: 1250,        // ₱ per teaching unit, per month, HE
+    unitsPerFullLoad: 24,             // full load reference
+    partTimeUnitConversion: 1.0,      // multiplier applied to part-time units
+    overloadRatePerUnit: 1400,        // units beyond full load
+    permanentBasis: 'monthly',        // permanent faculty are monthly-paid
+    semestersPerYear: 2,
+  },
 
   /* ---- Benefits ---- */
   'benefits.programs': [
@@ -89,12 +108,28 @@ MC.CONFIG_DEFAULTS = {
   'timekeeping.graceMinutes': 15,
   'timekeeping.workStart': '08:00',
   'timekeeping.workEnd': '17:00',
+  // 12 biometric devices across 3 campuses (per site survey)
   'timekeeping.devices': [
     { id: 'QC-M10-001', campus: 'Quezon City', location: 'Gate 01', type: 'M10 Fingerprint', status: 'Connected' },
-    { id: 'QC-FR-002', campus: 'Quezon City', location: 'Main Lobby', type: 'Facial Biometric', status: 'Connected' },
+    { id: 'QC-M10-002', campus: 'Quezon City', location: 'Gate 02', type: 'M10 Fingerprint', status: 'Connected' },
+    { id: 'QC-FR-003', campus: 'Quezon City', location: 'Main Lobby', type: 'Facial Biometric', status: 'Connected' },
+    { id: 'QC-FR-004', campus: 'Quezon City', location: 'Admin Bldg', type: 'Facial Biometric', status: 'Connected' },
+    { id: 'QC-M10-005', campus: 'Quezon City', location: 'Grade School', type: 'M10 Fingerprint', status: 'Connected' },
     { id: 'NU-M10-001', campus: 'Nuvali', location: 'Gate 01', type: 'M10 Fingerprint', status: 'Connected' },
+    { id: 'NU-FR-002', campus: 'Nuvali', location: 'Main Lobby', type: 'Facial Biometric', status: 'Connected' },
+    { id: 'NU-M10-003', campus: 'Nuvali', location: 'Faculty Rm', type: 'M10 Fingerprint', status: 'Connected' },
     { id: 'AL-M10-001', campus: 'Alviera', location: 'Gate 01', type: 'M10 Fingerprint', status: 'Connected' },
+    { id: 'AL-FR-002', campus: 'Alviera', location: 'Main Lobby', type: 'Facial Biometric', status: 'Connected' },
+    { id: 'AL-M10-003', campus: 'Alviera', location: 'Admin', type: 'M10 Fingerprint', status: 'Connected' },
+    { id: 'QC-RF-006', campus: 'Quezon City', location: 'Library', type: 'RFID / ID Card', status: 'Connected' },
   ],
+  // Biometric SDK/integration settings
+  'timekeeping.biometricSdk': {
+    vendor: 'To be confirmed (per device survey)',
+    connection: 'Web-based capture today; direct SDK/API integration targeted',
+    syncMode: 'Real-time push / scheduled pull',
+    model: 'M10 Fingerprint + Facial',
+  },
 
   /* ---- Compliance ---- */
   'compliance.reports': [
@@ -142,7 +177,8 @@ MC.CONFIG_DEFAULTS = {
 
   /* ---- Integrations ---- */
   'integrations': [
-    { name: 'M10 Biometric Devices', detail: 'Fingerprint & facial capture · 6 devices', status: 'Connected' },
+    { name: 'M10 Biometric Devices', detail: 'Fingerprint & facial capture · 12 devices · 3 campuses', status: 'Connected' },
+    { name: 'Microsoft 365', detail: 'Entra ID SSO · Outlook/Teams notifications · Excel export', status: 'Connected' },
     { name: 'Accounting SAP System', detail: 'Payroll journal entries · secure API', status: 'Connected' },
     { name: 'HRIS Mobile App', detail: 'iOS & Android · self-service & GPS attendance', status: 'Live' },
     { name: 'Email / SMTP', detail: 'Automated notifications', status: 'Connected' },
@@ -158,7 +194,7 @@ MC.CONFIG_DEFAULTS = {
   ],
 
   /* ---- Employment ---- */
-  'employment.types': ['Regular', 'Probationary', 'Contractual', 'Faculty', 'Part-time'],
+  'employment.types': ['Regular', 'Probationary', 'Contractual', 'Permanent Faculty', 'Part-Time Faculty', 'Project-Based', 'Consultant', 'Part-time'],
   'employment.salaryGrades': ['SG-11', 'SG-12', 'SG-13', 'SG-14', 'SG-15', 'SG-16', 'SG-18', 'SG-24'],
   'employment.probationaryMonths': 6,
 
@@ -238,6 +274,30 @@ MC.CONFIG_DEFAULTS = {
 
   /* ---- Workflow / statuses ---- */
   'workflow.statuses': ['Pending', 'In Progress', 'Approved', 'Rejected', 'Completed'],
+
+  /* ---- Rank -> monthly salary increment (auto-staged on approved promotion) ---- */
+  'performance.rankSalaryIncrements': {
+    'Instructor II': 2500, 'Assistant Professor I': 4000, 'Assistant Professor II': 5000,
+    'Associate Professor I': 6500, 'Associate Professor II': 7500, 'Associate Professor III': 8500,
+    'Professor I': 10000, 'Professor II': 12000,
+  },
+
+  /* ---- Legacy data migration ---- */
+  'migration': {
+    sourceSystem: 'Legacy HRIS (to be confirmed)',
+    database: 'To be confirmed',
+    recordsEstimate: 3500,
+    yearsAvailable: 10,
+    scopeSchoolYears: 1,            // included in base scope; additional years = add-on
+    fields: ['201 File', 'Service Record', 'Leave Balances', 'Payroll History', 'Benefits'],
+    cleansing: 'Shared — vendor maps & loads, client validates',
+  },
+
+  /* ---- Microsoft environment ---- */
+  'integrations.microsoft': {
+    entraIdSso: true, outlookTeamsNotifications: true, excelExport: true,
+    sharePointDocs: false, note: 'Confirm specific M365 products required by TOR',
+  },
 };
 
 (function () {
