@@ -332,7 +332,7 @@
         <div class="card"><div class="card-head"><h3>Awaiting your approval</h3><span class="badge b-red"><span class="bd"></span>${pending.length}</span></div>
           <div style="padding:8px">${pending.map(a=>`<div class="cl-row" style="padding:13px 15px"><div class="cl-check" style="background:var(--surface-2);color:var(--brand)">${icon('calendar')}</div>
             <div style="flex:1"><b style="font-size:13px">${a.type} — ${a.empName}</b><div class="muted" style="font-size:11.5px">${a.id} · ${fmt.dateShort(a.from)}${a.to!==a.from?' – '+fmt.dateShort(a.to):''} · ${a.reason}</div></div>
-            <div class="row" style="gap:7px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved');this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm danger" onclick="MC.decideApp('${a.id}','Rejected');this.closest('.cl-row').remove()">${icon('x')}</button></div></div>`).join('')}</div>
+            <div class="row" style="gap:7px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved');this.closest('.cl-row').remove()">${icon('check')} Approve</button><button class="btn sm danger" onclick="MC.confirmReject('${a.id}', this)">${icon('x')}</button></div></div>`).join('')}</div>
         </div>
       </div>
 

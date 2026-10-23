@@ -599,7 +599,7 @@
     return `<thead><tr><th>Ref</th><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>${list.map(a=>`<tr><td class="muted">${a.id}</td><td><b style="font-size:12.8px">${a.empName}</b></td><td>${badge(a.type,typeTone(a.type))}</td>
         <td class="muted">${fmt.dateShort(a.from)}${a.to!==a.from?' – '+fmt.dateShort(a.to):''}</td><td>${a.days?a.days+'d':(a.hours+'h')}</td><td>${badge(a.status)}</td>
-        <td>${a.status==='Pending'?`<div class="row" style="gap:6px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved')">${icon('check')}</button><button class="btn sm danger" onclick="MC.decideApp('${a.id}','Rejected')">${icon('x')}</button></div>`:`<button class="btn sm" onclick="MC.viewApp('${a.id}')">View</button>`}</td></tr>`).join('')}</tbody>`;
+        <td>${a.status==='Pending'?`<div class="row" style="gap:6px"><button class="btn sm primary" onclick="MC.decideApp('${a.id}','Approved')">${icon('check')}</button><button class="btn sm danger" onclick="MC.confirmReject('${a.id}', this)">${icon('x')}</button></div>`:`<button class="btn sm" onclick="MC.viewApp('${a.id}')">View</button>`}</td></tr>`).join('')}</tbody>`;
   }
   function typeTone(t){ return 'gray'; }
   MC.decideApp = function(id,decision){ const a=DB.applications.find(x=>x.id===id); if(!a)return; a.status=decision;

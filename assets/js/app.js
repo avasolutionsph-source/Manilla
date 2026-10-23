@@ -247,6 +247,7 @@ const DEMO_ACCOUNTS = {
   'applicant@mc.edu.ph':  { password: 'Miriam2026!', role: 'Applicant' },
 };
 MC.DEMO_ACCOUNTS = DEMO_ACCOUNTS;
+MC.confirmReject = function (id, btn) { MC.confirm('Reject this application?', 'This action cannot be undone.', () => { MC.decideApp(id, 'Rejected'); const row = btn && btn.closest && btn.closest('.cl-row'); if (row) row.remove(); }, 'Reject'); };
 MC.signIn = async function () {
   const email = ($('#loginEmail') || {}).value || '';
   const pass = ($('#loginPass') || {}).value || '';
