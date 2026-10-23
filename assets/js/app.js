@@ -135,15 +135,17 @@ MC.renderLogin = function () {
         <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-3);margin-bottom:16px">← Back to Miriam College website</a>
         <div class="row" style="gap:11px;margin-bottom:24px">${SEAL}<b style="font-size:15px">Miriam College HRIS</b></div>
         <h2>Sign in</h2>
-        <div class="sub">Choose a role to explore the portal. Each role sees a different, scoped experience.</div>
+        <div class="sub">Sign in with your Miriam College HRIS account.</div>
+        <div class="field"><label for="loginEmail">Email</label><input class="input" id="loginEmail" type="email" placeholder="you@mc.edu.ph" autocomplete="username"></div>
+        <div class="field"><label for="loginPass">Password</label><input class="input" id="loginPass" type="password" placeholder="Your password" autocomplete="current-password"></div>
+        <div id="loginErr" class="hint" style="color:var(--red);min-height:15px;margin:-6px 0 8px"></div>
+        <button class="btn primary block" id="loginBtn">${icon('lock')} <span id="loginLbl">Sign in</span></button>
+        <div class="mfa-note">${icon('shield')} Role-based access control · Multi-factor authentication ready</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:20px 0 14px;color:var(--ink-3);font-size:11.5px"><span style="flex:1;height:1px;background:var(--line)"></span>or explore a demo role<span style="flex:1;height:1px;background:var(--line)"></span></div>
         <div class="role-grid" id="roleGrid">
-          ${ROLES_UI.map(r => `<button class="role-opt ${r.key===MC.state.role?'active':''}" data-role="${r.key}">
+          ${ROLES_UI.map(r => `<button class="role-opt" data-role="${r.key}">
             <div class="ic">${icon(r.icon)}</div><div><b>${r.key}</b><span>${r.desc}</span></div></button>`).join('')}
         </div>
-        <div class="field"><label>Email</label><input class="input" id="loginEmail" value="${loginEmailFor()}" readonly></div>
-        <div class="field"><label>Password</label><input class="input" type="password" value="demo-access" readonly></div>
-        <button class="btn primary block" id="loginBtn">${icon('lock')} <span id="loginLbl">Sign in to ${MC.ROLES[MC.state.role].portal}</span></button>
-        <div class="mfa-note">${icon('shield')} Protected by multi-factor authentication (MFA) · Role-based access control</div>
         ${(window.MC&&MC.config&&MC.config.get('features',{}).kiosk===false)?'':`<div style="text-align:center;margin-top:16px"><button class="btn sm" id="kioskBtn">${icon('fingerprint')} Open Time-in Kiosk (M10 / Facial)</button></div>`}
         <div style="text-align:center;color:var(--ink-3);font-size:11px;margin-top:18px">© 2026 Miriam College · Information & Communications Technology Office</div>
       </div>
@@ -151,12 +153,11 @@ MC.renderLogin = function () {
   </div>`;
   $('#roleGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-role]'); if (!b) return;
-    MC.state.role = b.dataset.role;
-    $$('.role-opt').forEach(x => x.classList.toggle('active', x === b));
-    $('#loginLbl').textContent = `Sign in to ${MC.ROLES[MC.state.role].portal}`;
-    $('#loginEmail').value = loginEmailFor();
+    MC.state.role = b.dataset.role; MC.authedLogin = false; // demo access
+    MC.enterApp();
   });
-  $('#loginBtn').addEventListener('click', () => MC.enterApp());
+  $('#loginBtn').addEventListener('click', () => MC.signIn());
+  $('#loginPass')?.addEventListener('keydown', e => { if (e.key === 'Enter') MC.signIn(); });
   $('#kioskBtn')?.addEventListener('click', () => MC.renderKiosk());
 };
 
@@ -235,6 +236,27 @@ MC.renderKioskScanReset = function(){
 };
 function loginEmailFor(){ return { 'HR Administrator':'nracho@mc.edu.ph','Management':'rlaurel@mc.edu.ph','Supervisor':'jvelasco@mc.edu.ph','Employee':'rdizon@mc.edu.ph','Applicant':'diane.castro@email.com' }[MC.state.role]; }
 
+MC.signIn = async function () {
+  const email = ($('#loginEmail') || {}).value || '';
+  const pass = ($('#loginPass') || {}).value || '';
+  const err = $('#loginErr');
+  if (!email || !pass) { if (err) err.textContent = 'Enter your email and password.'; return; }
+  const btn = $('#loginBtn'), lbl = $('#loginLbl');
+  if (btn) btn.disabled = true; if (lbl) lbl.textContent = 'Signing in…'; if (err) err.textContent = '';
+  try {
+    if (!MC.auth) throw new Error('Authentication is unavailable.');
+    const profile = await MC.auth.login(email, pass);
+    const meta = (MC.auth.user && MC.auth.user.user_metadata) || {};
+    const role = (profile && profile.role) || meta.role;
+    if (!role || !MC.ROLES[role]) throw new Error('Your account has no assigned role. Contact HR.');
+    MC.state.role = role; MC.authedLogin = true;
+    if (profile && MC.PERSONA[role]) MC.PERSONA[role] = { ...MC.PERSONA[role], name: profile.name || MC.PERSONA[role].name, id: profile.emp_id || MC.PERSONA[role].id };
+    MC.enterApp();
+  } catch (e) {
+    if (btn) btn.disabled = false; if (lbl) lbl.textContent = 'Sign in';
+    if (err) err.textContent = String((e && e.message) || e);
+  }
+};
 MC.enterApp = function () {
   MC.state.route = MC.homeRoute();
   MC.renderApp();
@@ -368,7 +390,8 @@ MC.openUserMenu = function () {
     <div class="menu-item" data-a="logout">${icon('logout')} Sign out</div></div>`;
   const m = popover($('#userChip'), html);
   m.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; closePopover();
-    if (a.dataset.a==='logout' || a.dataset.a==='role') MC.renderLogin();
+    if (a.dataset.a==='logout') { if (MC.auth) MC.auth.logout(); MC.authedLogin = false; MC.renderLogin(); }
+    else if (a.dataset.a==='role') MC.renderLogin();
     else if (a.dataset.a==='profile') MC.go({ 'HR Administrator':'employees','Supervisor':'sup_team','Employee':'emp_profile','Applicant':'app_profile' }[MC.state.role]);
   });
 };

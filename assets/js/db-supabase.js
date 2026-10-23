@@ -20,7 +20,7 @@
   const num = (x) => (x === null || x === undefined || x === '') ? x : Number(x);
   async function rest(path) {
     const r = await fetch(`${URL}/rest/v1/${path}`, {
-      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, Accept: 'application/json' },
+      headers: { apikey: KEY, Authorization: (window.MC&&MC.auth&&MC.auth.authHeader)?MC.auth.authHeader():'Bearer '+KEY, Accept: 'application/json' },
     });
     if (!r.ok) throw new Error(`REST ${path} → ${r.status}`);
     return r.json();
@@ -141,7 +141,7 @@
     const r = await fetch(`${URL}/rest/v1/${path}`, {
       method,
       headers: {
-        apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json',
+        apikey: KEY, Authorization: (window.MC&&MC.auth&&MC.auth.authHeader)?MC.auth.authHeader():'Bearer '+KEY, 'Content-Type': 'application/json',
         ...(prefer ? { Prefer: prefer } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
