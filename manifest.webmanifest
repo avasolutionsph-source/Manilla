@@ -1,0 +1,24 @@
+{
+  "name": "Miriam College HRIS",
+  "short_name": "MC HRIS",
+  "description": "Human Resources and Information System for Miriam College — recruitment, 201 files, timekeeping, payroll, benefits, performance, and offboarding across Quezon City, Nuvali, and Alviera campuses.",
+  "id": "/",
+  "start_url": "hris.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f5f7",
+  "theme_color": "#1d3473",
+  "lang": "en-PH",
+  "categories": ["business", "productivity", "education"],
+  "icons": [
+    { "src": "assets/Images/Miriam%20Logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/Images/Miriam%20Logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/Images/Miriam%20Logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "File a leave / OB / OT", "url": "hris.html#file", "description": "Open the application filing form" },
+    { "name": "My payslips", "url": "hris.html#payslips", "description": "View employee payslips" },
+    { "name": "Approvals", "url": "hris.html#approvals", "description": "Review pending approvals" }
+  ]
+}

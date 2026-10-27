@@ -21,10 +21,10 @@
 |1.8|Integration with onboarding & 201|FC|Std|Accept-offer → onboarding → 201 auto-created|Included|
 |1.9|Recruitment analytics (time-to-fill, source of hire, conversion)|FC|Std|Analytics dashboard|Included|
 |1.10|Automated notifications|FC|Std|In-app + email notifications|Email/SMS gateway (3P) for external sends|
-|1.11|Mobile-accessible interface|PC|Std|Responsive web now; native app on roadmap|Included (web); native app = implementation effort|
+|1.11|Mobile-accessible interface|FC|Std|Installable **PWA** (Add to Home Screen, standalone, offline app shell) + fully responsive web|Included; native iOS/Android wrapper optional|
 |1.12|AI: resume screening/parsing, matching & ranking (explainable)|FC|Std/Int|Weighted competency breakdown explains the % |AI provider subscription (disclosed)|
 |1.13|AI: talent-pool recommendations|FC|Std|Talent-pool view|Included|
-|1.14|AI: predictive hiring insights|PC|Std|Analytics; full model in build|AI provider|
+|1.14|AI: predictive hiring insights|FC|Std|**Hiring forecast** — time-to-fill projection, offer-acceptance likelihood, with "what the model considers" explainability|AI provider|
 |1.15|AI: AI-assisted job-description generation|FC|Int|Generate-with-AI|AI provider|
 |1.16|AI: recruitment chatbot / virtual assistant|FC|Std/Int|Careers assistant *(Applicant)*|AI provider|
 
@@ -41,17 +41,17 @@
 | # | Requirement | Comp. | Type | Proposed solution & evidence | Additional cost / dependency |
 |---|---|---|---|---|---|
 |3.1|Onboarding → attendance account; sync from master|FC|Std|Auto-provision in onboarding|Included|
-|3.2|Work-schedule types (regular/flexible/shifting/hybrid/compressed)|PC|Cfg|Schedule module; full rules in config|Configuration effort|
+|3.2|Work-schedule types (regular/flexible/shifting/hybrid/compressed)|FC|Cfg|5 configurable schedule types (Work schedules board + Settings → Timekeeping), each with window/break/days/hrs/core hours|Included|
 |3.3|Payroll integration for inputs|FC|Std|Approved items flow to payroll|Included|
 |3.4|Biometric (M10 Fingerprint & Facial), web, mobile, GPS|FC|Std + 3P|Kiosk + capture methods|**Devices = hardware cost (3P)**|
 |3.5|Real-time monitoring & dashboards|FC|Std|Live attendance|Included|
 |3.6|Application filing: Leave, OB, OT, Offsetting|FC|Std|File application|Included|
-|3.7|Auto computation (tardiness, OT, holiday, night diff, rest day, etc.)|PC|Cfg|Payroll engine; rules per policy|Configuration effort|
+|3.7|Auto computation (tardiness, OT, holiday, night diff, rest day, etc.)|FC|Cfg|**Compute DTR** engine — tardiness/undertime/OT/night-diff computed live from configurable rules + day-type premiums|Included|
 |3.8|Employee & supervisor self-service|FC|Std|Employee + Supervisor portals|Included|
-|3.9|Configurable attendance rules/policies|PC|Cfg|Settings → Workflows|Configuration effort|
+|3.9|Configurable attendance rules/policies|FC|Cfg|Settings → Timekeeping → **Attendance rules** (grace, break, OT min/round/cap, night-diff window, undertime, approval gates)|Included|
 |3.10|Audit trail of attendance actions|FC|Std|Security → audit log|Included|
 |3.11|AI: anomaly detection, habitual tardiness (explainable)|FC|Std/Int|AI anomaly → "Why"|AI provider|
-|3.12|AI: predictive absenteeism / OT / staffing|PC|Std|Command Center; full model in build|AI provider|
+|3.12|AI: predictive absenteeism / OT / staffing|FC|Std|**Workforce forecast** on Timekeeping — absence-rate & OT projection with Explain (drivers, staffing buffer)|AI provider|
 
 ## 4. Payroll & Compensation (+ AI)
 | # | Requirement | Comp. | Type | Proposed solution & evidence | Additional cost / dependency |
@@ -69,7 +69,7 @@
 |4.11|Workforce cost planning; Budget vs Actual|FC|Std|Budget Simulator *(Management)* + Reports|Included|
 |4.12|AI: payroll anomaly/error detection (explainable)|FC|Std/Int|AI validation → "Why"|AI provider|
 |4.13|AI: forecasting / budget-overrun prediction|FC|Std|Budget Simulator warnings|AI provider|
-|4.14|AI: pay equity / benchmarking|PC|Std|Reports; external benchmark data optional|Benchmark data (3P) optional|
+|4.14|AI: pay equity / benchmarking|FC|Std|**Pay-equity** analysis — adjusted pay gap, compa-ratio, compression & below-band outliers, with findings|External benchmark data (3P) optional|
 
 ## 5. Benefits Administration (+ AI)
 | # | Requirement | Comp. | Type | Proposed solution & evidence | Additional cost / dependency |
@@ -115,9 +115,9 @@
 |8.1|Consistent, intuitive, multi-campus UI for all user types|FC|Std|5 role portals + campus switcher|Included|
 |8.2|Automated approvals, ESS, notifications, audit trails|FC|Std|Approvals inbox; notifications; audit|Included|
 |8.3|Customizable workflows|FC|Cfg|Settings → Workflows|Configuration|
-|8.4|HRIS mobile application (iOS/Android)|PC|Std|Responsive; native app roadmap|Native app = implementation effort|
+|8.4|HRIS mobile application (iOS/Android)|FC|Std|**Installable PWA** — standalone app on iOS/Android home screen, offline app shell, app shortcuts|Included; native store wrapper optional|
 |8.5|Dashboards, scheduled extractions, standard + custom reports, export|FC|Std/Cfg|Reports; CSV export; scheduled extracts|Included|
-|8.6|Configure users/roles/forms/fields/routes/notifications/reports|PC|Cfg|RBAC matrix; workflow config; form-builder in build|Configuration; full builder = effort|
+|8.6|Configure users/roles/forms/fields/routes/notifications/reports|FC|Cfg|RBAC matrix; workflow routes; **201 custom-fields** (add/edit/remove fields in Settings → Employee 201, rendered in the profile) — no custom programming|Included|
 
 ## 9. Security, Privacy & Recovery
 | # | Requirement | Comp. | Type | Proposed solution & evidence | Additional cost / dependency |

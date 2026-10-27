@@ -6,6 +6,14 @@
   <title>Miriam College HRIS — Demo</title>
   <meta name="description" content="Human Resources and Information System — interactive prototype for Miriam College (TOR review demo).">
   <link rel="icon" href="assets/Images/Miriam%20Logo.png">
+  <!-- PWA: installable on iOS / Android home screens, offline app shell -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1d3473">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MC HRIS">
+  <link rel="apple-touch-icon" href="assets/Images/Miriam%20Logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,5 +32,13 @@
   <script src="assets/js/features.js"></script>
   <script src="assets/js/settings.js"></script>
   <script src="assets/js/db-supabase.js"></script>
+  <script>
+    /* Register the PWA service worker (installable + offline app shell). */
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

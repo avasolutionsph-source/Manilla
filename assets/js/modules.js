@@ -119,7 +119,7 @@
       title:'Recruitment & ATS', crumb:'Talent Acquisition',
       html:`
       <div class="page-head"><div><div class="t">Recruitment & Applicant Tracking</div><div class="d">Requisition to onboarding — with AI-assisted screening and ranking.</div></div>
-        <div class="row wrap"><button class="btn" id="rReq">${icon('fileText')} New requisition</button><button class="btn primary" id="rJob">${icon('plus')} Post a job</button></div></div>
+        <div class="row wrap"><button class="btn" onclick="MC.hiringForecast()">${icon('sparkles')} Hiring forecast</button><button class="btn" id="rReq">${icon('fileText')} New requisition</button><button class="btn primary" id="rJob">${icon('plus')} Post a job</button></div></div>
       <div class="tabs" id="rTabs">
         ${[['pipeline','Candidate Pipeline'],['jobs','Job Requisitions'],['talent','Talent Pool'],['analytics','Analytics']].map(([k,l])=>`<div class="tab ${k===MC.recruitTab?'active':''}" data-t="${k}">${l}</div>`).join('')}
       </div>
@@ -400,6 +400,30 @@
     if(window.MC&&MC.db&&MC.db.live()) MC.db.insert('jobs',{ id, title, dept:rec.dept, campus:'Quezon City', job_type:'—', status:'For Approval', posted:'—', applicants:0, stage:'Requisition', channel:'—', requester:rec.requester }).catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
+  /* ---- Predictive hiring insights (time-to-fill, offer acceptance) ---- */
+  MC.hiringForecast = function(){
+    const open=DB.jobs.filter(j=>j.status==='Open'||j.status==='Posted'||j.stage!=='Requisition').length||6;
+    modal({title:'Hiring forecast',sub:'Predictive talent-acquisition insights · decision-support only',size:'lg',body:`
+      <div class="grid g-3 mb">
+        ${stat({icon:'clock',color:'blue',value:'27 days',label:'Projected time-to-fill'})}
+        ${stat({icon:'userCheck',color:'green',value:'82%',label:'Offer-acceptance likelihood'})}
+        ${stat({icon:'userPlus',color:'violet',value:open+'',label:'Open requisitions'})}
+      </div>
+      <div class="card card-pad mb"><div class="between"><span class="hd">${icon('sparkles')} Time-to-fill trend</span>${badge('Predictive','violet')}</div>
+        <div class="mt">${charts.line([34,31,29,30,27,26],{labels:['May','Jun','Jul','Aug','Sep','Oct*'],color:'var(--brand-2)'})}</div>
+        <div class="muted" style="font-size:11.5px;margin-top:6px">Days from requisition approval to accepted offer. Faculty roles run ~12 days longer than staff.</div></div>
+      <div class="card card-pad" style="background:var(--surface-2)">
+        <div class="hd mb">${icon('sparkles')} What the model considers</div>
+        <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.75;color:var(--ink-2)">
+          <li><b>Source-of-hire mix</b> — referrals convert 2.3× faster than job boards.</li>
+          <li><b>Pipeline velocity</b> — 2 roles are stalling at the assessment stage.</li>
+          <li><b>Offer competitiveness</b> — one offer is below the band midpoint; acceptance risk is elevated.</li>
+          <li><b>Seasonality</b> — faculty hiring peaks before the semester; plan requisitions earlier.</li>
+        </ul></div>
+      <div class="alertbar ai mt">${icon('shield')} Advisory only — the hiring committee makes all selection and offer decisions.</div>`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
+
   /* ========================================================
      EMPLOYEE 201 FILES
      ======================================================== */
@@ -466,7 +490,8 @@
 
   MC.openEmployee = function(id){
     const e = DB.empById(id); if(!e) return;
-    const tabs = [['personal','Personal'],['employment','Employment'],['service','Service Record'],['family','Family'],['education','Education'],['eligibility','Gov/Licensure'],['work','Work History'],['awards','Awards'],['orgs','Prof. Orgs'],['training','Training'],['medical','Medical'],['audit','Audit Trail']];
+    const hasCustom=((window.MC&&MC.config?MC.config.get('records.customFields',[]):[])||[]).length>0;
+    const tabs = [['personal','Personal'],['employment','Employment'],['service','Service Record'],['family','Family'],['education','Education'],['eligibility','Gov/Licensure'],['work','Work History'],['awards','Awards'],['orgs','Prof. Orgs'],['training','Training'],['medical','Medical']].concat(hasCustom?[['custom','Custom Fields']]:[]).concat([['audit','Audit Trail']]);
     modal({title:'Employee 201 File',sub:`${e.id} · ${e.name}`,size:'xl',body:`
       <div class="row" style="gap:16px;margin-bottom:18px">${avatar(e,'lg')}
         <div style="flex:1"><h3 style="font-size:19px">${e.name}</h3><div class="muted">${e.position} · ${e.dept}</div>
@@ -514,6 +539,13 @@
     if(tab==='medical') return `<div class="card card-pad"><div class="row between"><div><b>Annual Physical Examination</b><div class="muted" style="font-size:12px">Secure document storage · sensitive data</div></div><button class="btn sm" onclick="UI.toast('Upload','info','APE results encrypted at rest')">${icon('upload')} Upload APE</button></div>
       <div class="mt-lg">${kv('Latest APE','Mar 12, 2026 · Fit to work')}${kv('Blood type','O+')}${kv('Allergies','None reported')}${kv('Records','3 documents · encrypted')}</div>
       <div class="alertbar info mt">${icon('lock')} Medical records are access-restricted and encrypted at rest per Data Privacy Act.</div></div>`;
+    if(tab==='custom'){
+      const cf=(window.MC&&MC.config?MC.config.get('records.customFields',[]):[])||[];
+      const sample={'PRC License No.':(e.rank!=='—'?'PRC-00'+String(e.id).replace(/\D/g,'').slice(-5):'N/A'),'PRC Expiry':(e.rank!=='—'?'Dec 2027':'—'),'Highest Degree Attained':(e.rank!=='—'?'Doctorate':"Bachelor"),'Emergency Contact Name':'On file · verified','Emergency Contact No.':'+63 9•• ••• ••••','Blood Type':'O+'};
+      const bySec={}; cf.forEach(f=>{(bySec[f.section||'Other']=bySec[f.section||'Other']||[]).push(f);});
+      return `<div class="grid g-2">${Object.keys(bySec).map(sec=>`<div class="card card-pad"><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">${sec}</div>${bySec[sec].map(f=>kv(f.label+(f.required?' *':''),sample[f.label]||'—')).join('')}</div>`).join('')}</div>
+        <div class="alertbar info mt">${icon('settings')} These fields are <b>configured in Settings → Employee 201</b> — HR can add, edit, or remove them without custom programming.</div>`;
+    }
     return `<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Field</th></tr></thead><tbody>
       <tr><td class="muted" style="font-size:12px">2026-10-13 08:14</td><td>M. Par</td><td>Updated</td><td>Salary grade</td></tr>
       <tr><td class="muted" style="font-size:12px">2026-06-01 09:02</td><td>System</td><td>Onboarding sync</td><td>Profile created</td></tr>
@@ -560,7 +592,7 @@
       title:'Timekeeping & Attendance', crumb:'Schedule Management',
       html:`
       <div class="page-head"><div><div class="t">Timekeeping & Attendance</div><div class="d">Real-time workforce visibility · biometric, web, and mobile capture.</div></div>
-        <div class="row wrap"><button class="btn" id="tExport">${icon('download')} Export DTR</button><button class="btn primary" id="tFile">${icon('calendar')} File application</button></div></div>
+        <div class="row wrap"><button class="btn" onclick="MC.scheduleBoard()">${icon('calendar')} Work schedules</button><button class="btn" onclick="MC.computeDTR()">${icon('clock')} Compute DTR</button><button class="btn" id="tExport">${icon('download')} Export DTR</button><button class="btn primary" id="tFile">${icon('calendar')} File application</button></div></div>
 
       <div class="mb">${aiBanner(`<b>AI anomaly detection:</b> 2 employees show a habitual Monday-tardiness pattern. Recommended: coaching note (not sanction). <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiAttendanceDetail()">${icon('eye')} Why</button>`)}</div>
 
@@ -578,6 +610,15 @@
         <div class="card"><div class="card-head"><div><h3>Live attendance log</h3><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · auto-synced</div></div><span class="chip" style="color:var(--ink-2)">${icon('activity')} Live</span></div>
           <div class="table-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Time In</th><th>Method</th><th>Status</th></tr></thead>
           <tbody>${DB.attendanceToday.map(a=>{const e=DB.empById(a.id);return `<tr><td class="cell-emp">${e?avatar(e):''}<div><b>${e?e.name:a.id}</b><span>${e?e.dept:''}</span></div></td><td><b>${a.timeIn}</b></td><td class="muted"><span class="chip">${a.mode}</span></td><td>${badge(a.status)}</td></tr>`;}).join('')}</tbody></table></div></div>
+      </div>
+
+      <div class="grid mb" style="grid-template-columns:1.4fr 1fr">
+        <div class="card"><div class="card-head"><div><h3>Workforce forecast</h3><div class="sub">Absenteeism & overtime — 4-month AI projection</div></div><div class="row" style="gap:8px"><span class="ai-flag">${icon('sparkles')} Predictive</span><button class="btn sm" onclick="MC.aiWorkforceForecast()">${icon('eye')} Explain</button></div></div>
+          <div class="card-pad">${charts.line([4.1,3.8,4.3,5.1,5.6,6.0],{labels:['Jun','Jul','Aug','Sep','Oct','Nov*'],color:'var(--amber)'})}
+            <div class="muted" style="font-size:11.5px;margin-top:6px">Absence rate %, dotted = projection. Expected to rise toward term-end; staffing buffer recommended.</div></div></div>
+        <div class="card"><div class="card-head"><h3>Schedule mix</h3><span class="chip">${(window.MC&&MC.config?MC.config.get('timekeeping.scheduleTypes',[]):[]).length} types</span></div>
+          <div class="card-pad">${(function(){const types=(window.MC&&MC.config?MC.config.get('timekeeping.scheduleTypes',[]):[]);const n=DB.employees.length||412;const dist=[62,14,10,9,5];return types.map((t,i)=>`<div class="between" style="padding:7px 0;border-bottom:1px solid var(--line)"><div><b style="font-size:12.8px">${t.name}</b><div class="muted" style="font-size:11px">${t.daysPerWeek}×${t.hoursPerDay}h · ${t.coreHours}</div></div><b>${Math.round((dist[i]||3)/100*n)}</b></div>`).join('');})()}
+            <button class="btn block mt-sm" onclick="MC.scheduleBoard()">${icon('calendar')} Manage schedules</button></div></div>
       </div>
 
       <div class="card">
@@ -640,6 +681,95 @@
       .catch(e=>toast('Sync failed','warn',String(e.message||e)));
   };
 
+  /* ---- Work-schedule management (regular/flexible/shifting/hybrid/compressed) ---- */
+  MC.scheduleBoard = function(){
+    const types=(window.MC&&MC.config?MC.config.get('timekeeping.scheduleTypes',[]):[]);
+    const rows=types.map(t=>`<tr><td><b>${t.name}</b> <span class="muted" style="font-size:10.5px">${t.code}</span></td>
+      <td class="muted">${t.start}–${t.end}</td><td>${t.daysPerWeek} days</td><td>${t.hoursPerDay} h</td>
+      <td class="muted">${t.breakMins}m</td><td class="muted" style="font-size:11.5px">${t.coreHours}</td></tr>`).join('');
+    modal({title:'Work schedules',sub:'Configurable schedule types · synced from the employee master',body:`
+      <div class="table-wrap"><table class="tbl"><thead><tr><th>Type</th><th>Window</th><th>Days/wk</th><th>Hrs/day</th><th>Break</th><th>Core hours</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="list mt">${types.map(t=>`<div class="cl-row" style="padding:9px 12px;margin-bottom:6px"><div style="flex:1"><b style="font-size:12.5px">${t.name}</b><div class="muted" style="font-size:11.5px">${t.note}</div></div></div>`).join('')}</div>
+      <div class="alertbar info mt">${icon('info')} Schedule type and work location sync automatically from the 201 File; attendance rules below drive the DTR computation. Add or edit types in Settings → Timekeeping.</div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();MC.setTab='timekeeping';MC.go('settings')">${icon('settings')} Configure</button>`});
+  };
+
+  /* ---- DTR auto-computation (tardiness, undertime, OT, night diff, holiday) ---- */
+  MC.computeDTR = function(){
+    const emps=DB.employees.slice(0,0).concat(DB.employees);
+    const types=(window.MC&&MC.config?MC.config.get('timekeeping.scheduleTypes',[]):[]);
+    modal({title:'Compute DTR',sub:'Auto-computed from configurable attendance rules',body:`
+      <div class="form-row"><div class="field"><label>Employee</label><select class="select" id="dtrEmp">${emps.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}</select></div>
+        <div class="field"><label>Schedule</label><select class="select" id="dtrSched">${types.map(t=>`<option value="${t.code}">${t.name} (${t.daysPerWeek}×${t.hoursPerDay}h)</option>`).join('')}</select></div></div>
+      <div class="form-row"><div class="field"><label>Day type</label><select class="select" id="dtrDay"><option value="regular">Regular Day</option><option value="rest">Rest Day</option><option value="special">Special Non-Working Holiday</option><option value="holiday">Regular Holiday</option></select></div>
+        <div class="field"><label>Pre-approved OT?</label><select class="select" id="dtrOt"><option value="yes">Yes</option><option value="no">No</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Time in</label><input class="input" type="time" id="dtrIn" value="08:12"></div><div class="field"><label>Time out</label><input class="input" type="time" id="dtrOut2" value="18:20"></div></div>
+      <div id="dtrOut" class="mt"></div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" id="dtrGo">${icon('zap')} Compute</button>`});
+    const go=document.getElementById('dtrGo'); if(go) go.addEventListener('click',MC.runDTR); MC.runDTR();
+  };
+  MC.runDTR = function(){
+    const v=id=>((document.getElementById(id)||{}).value||'');
+    const types=(window.MC&&MC.config?MC.config.get('timekeeping.scheduleTypes',[]):[]);
+    const rules=(window.MC&&MC.config?MC.config.get('timekeeping.rules',{}):{})||{};
+    const stat=(window.MC&&MC.config?MC.config.get('payroll.statutory',{}):{})||{};
+    const sched=types.find(t=>t.code===v('dtrSched'))||types[0]||{start:'08:00',end:'17:00',breakMins:60,hoursPerDay:8};
+    const toMin=t=>{ if(!/^\d{1,2}:\d{2}$/.test(t))return null; const[h,m]=t.split(':').map(Number); return h*60+m; };
+    let sS=toMin(sched.start), sE=toMin(sched.end);
+    if(sS==null) sS=toMin(MC.config.get('timekeeping.workStart','08:00'));
+    if(sE==null) sE=toMin(MC.config.get('timekeeping.workEnd','17:00'));
+    if(sE<=sS) sE+=1440;
+    const brk=Number(sched.breakMins!=null?sched.breakMins:(rules.breakMinutes||60));
+    let tIn=toMin(v('dtrIn')), tOut=toMin(v('dtrOut2'));
+    if(tIn==null||tOut==null){ document.getElementById('dtrOut').innerHTML=`<div class="alertbar warn">${icon('alertTriangle')} Enter valid time in/out.</div>`; return; }
+    if(tOut<=tIn) tOut+=1440;
+    const grace=Number(rules.graceMinutes!=null?rules.graceMinutes:15);
+    const lateRaw=Math.max(0,tIn-sS); const tardy=lateRaw<=grace?0:lateRaw;
+    const undertime=Math.max(0,sE-tOut);
+    const scheduledMin=Math.max(0,(sE-sS)-brk);
+    const workedMin=Math.max(0,(tOut-tIn)-brk);
+    // Overtime: beyond shift end, gated by approval, min threshold, rounding, and daily cap
+    const otApproved=v('dtrOt')!=='no'; const otRaw=Math.max(0,tOut-sE);
+    const minOt=Number(rules.minOtMinutes!=null?rules.minOtMinutes:60), rnd=Number(rules.otRoundingMinutes||30), cap=Number(rules.maxOtHoursPerDay!=null?rules.maxOtHoursPerDay:4)*60;
+    let ot=otRaw, otNote='';
+    if(rules.requireApprovalForOt && !otApproved){ ot=0; otNote='not pre-approved'; }
+    else if(otRaw<minOt){ ot=0; otNote=`below ${minOt}-min minimum`; }
+    else { ot=Math.min(cap,Math.floor(otRaw/rnd)*rnd); if(ot<otRaw) otNote=`rounded to ${rnd}-min` + (Math.floor(otRaw/rnd)*rnd>cap?`, capped ${cap/60}h`:''); }
+    // Night differential overlap (window 22:00–06:00)
+    const ndS=toMin(rules.nightDiffStart||'22:00'), ndE=toMin(rules.nightDiffEnd||'06:00');
+    const ov=(a,b,c,d)=>Math.max(0,Math.min(b,d)-Math.max(a,c));
+    const nd=ov(tIn,tOut,0,ndE)+ov(tIn,tOut,ndS,1440+ndE);
+    const dayType=v('dtrDay');
+    const dayMap={regular:['Regular Day',100,stat.otRegularRate||125],rest:['Rest Day',130,stat.otRestDayRate||130],special:['Special Non-Working Holiday',130,130],holiday:['Regular Holiday',stat.holidayRate||200,stat.holidayRate||200]};
+    const dm=dayMap[dayType]||dayMap.regular;
+    const hm=m=>`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}m`;
+    const row=(k,val,tone)=>`<div class="between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span class="muted" style="font-size:12.5px">${k}</span><b${tone?` style="color:var(--${tone})"`:''}>${val}</b></div>`;
+    document.getElementById('dtrOut').innerHTML=`
+      <div class="card card-pad" style="background:var(--surface-2)">
+        ${row('Scheduled (less break)',hm(scheduledMin)+` · ${sched.start}–${sched.end}`)}
+        ${row('Worked hours',hm(workedMin))}
+        ${row('Tardiness',tardy?hm(tardy):'None',tardy?'amber':'green')}
+        ${row('Undertime',undertime?hm(undertime):'None',undertime?'amber':'green')}
+        ${row('Overtime credited',ot?hm(ot):('0h 00m'+(otNote?` (${otNote})`:'')),ot?'green':'')}
+        ${row('Night differential',nd?hm(nd)+` @ +${stat.nightDiffRate||10}%`:'None')}
+        ${row('Day type / base premium',`${dm[0]} · ${dm[1]}%`,dayType!=='regular'?'blue':'')}
+        ${ot?row('OT premium rate',`${dm[2]}%`):''}
+      </div>
+      <div class="alertbar info mt">${icon('info')} Computed from <b>Settings → Timekeeping</b> rules (grace ${grace}m, break ${brk}m, OT min ${minOt}m / round ${rnd}m / cap ${cap/60}h). These values post to the payroll computation for this cutoff.</div>`;
+  };
+  MC.aiWorkforceForecast = function(){
+    modal({title:'Workforce forecast — how it was derived',sub:'Predictive · decision-support only',body:`
+      <div class="card card-pad" style="background:var(--surface-2)">
+        <div class="between"><span class="hd">${icon('sparkles')} Model inputs</span>${badge('Predictive','violet')}</div>
+        <div class="mt" style="font-size:13px;line-height:1.7;color:var(--ink-2)">
+          Absence-rate projection blends <b>24 months of DTR history</b>, the academic calendar (term-end peaks), approved leave already on file, and seasonal illness trends.
+          <ul style="margin:8px 0 0;padding-left:18px"><li>Nov projection <b>6.0%</b> (↑ from 5.6% in Oct) — term-end clustering.</li>
+          <li>Overtime utilization expected to rise in Registrar & ICT during enrollment.</li>
+          <li>Recommended: a <b>3–4% staffing buffer</b> for front-line units in November.</li></ul></div></div>
+      <div class="alertbar ai mt">${icon('shield')} Advisory only — staffing and leave decisions remain with HR and the unit heads.</div>`,
+      foot:`<button class="btn primary" data-close>Close</button>`});
+  };
+
   /* ========================================================
      PAYROLL & COMPENSATION
      ======================================================== */
@@ -649,7 +779,7 @@
       title:'Payroll & Compensation', crumb:'Payroll Management',
       html:`
       <div class="page-head"><div><div class="t">Payroll & Compensation</div><div class="d">${p.period} · ${p.cutoff} · ${p.group}</div></div>
-        <div class="row wrap"><button class="btn" onclick="MC.facultyPayroll()">${icon('award')} Faculty load</button><button class="btn" onclick="MC.leaveConversion()">${icon('coins')} Leave conversion</button><button class="btn" id="pJE">${icon('link')} Post to SAP</button><button class="btn primary" id="pRun">${icon('zap')} Run payroll</button></div></div>
+        <div class="row wrap"><button class="btn" onclick="MC.payEquity()">${icon('sparkles')} Pay equity</button><button class="btn" onclick="MC.facultyPayroll()">${icon('award')} Faculty load</button><button class="btn" onclick="MC.leaveConversion()">${icon('coins')} Leave conversion</button><button class="btn" id="pJE">${icon('link')} Post to SAP</button><button class="btn primary" id="pRun">${icon('zap')} Run payroll</button></div></div>
 
       <div class="mb">${aiBanner(`<b>AI payroll validation:</b> 0 critical anomalies in this run. 1 advisory — an overtime entry 18% above the employee's 3-month average. <button class="btn sm" style="padding:3px 10px;margin-left:4px" onclick="MC.aiPayrollDetail()">${icon('eye')} Why</button>`)}</div>
 
@@ -719,6 +849,32 @@
       const el=document.getElementById('lcResult'); if(el) el.innerHTML=`<div class="between"><span style="color:#c7d2ef">Convertible days</span><b style="color:#fff">${allowed}</b></div><div class="between mt" style="border-top:1px solid rgba(255,255,255,.2);padding-top:10px"><span style="color:#c7d2ef">CASH VALUE</span><b style="font-size:20px;color:#fff">\u20b1${cash.toLocaleString()}</b></div>${warn}`;
     };
     const b=document.getElementById('lcCalc'); if(b)b.addEventListener('click',calc); calc();
+  };
+  MC.payEquity = function(){
+    const bar=(label,a,b,colA,colB)=>`<div style="margin-bottom:12px"><div class="between" style="font-size:12px;margin-bottom:4px"><span>${label}</span><span class="muted">${a} vs ${b}</span></div>
+      <div style="display:flex;gap:4px;height:10px"><i style="flex:${a};background:${colA};border-radius:4px"></i><i style="flex:${b};background:${colB};border-radius:4px"></i></div></div>`;
+    modal({title:'Pay-equity & benchmarking',sub:'Compensation fairness analysis · decision-support only',size:'lg',body:`
+      <div class="grid g-3 mb">
+        ${stat({icon:'coins',color:'green',value:'3.1%',label:'Adjusted pay gap'})}
+        ${stat({icon:'layers',color:'blue',value:'0.94',label:'Compa-ratio (median)'})}
+        ${stat({icon:'users',color:'violet',value:'2',label:'Below-band outliers'})}
+      </div>
+      <div class="card card-pad mb"><div class="between"><span class="hd">${icon('sparkles')} Median pay by group</span>${badge('Analysis','blue')}</div>
+        <div class="mt-lg">
+          ${bar('Faculty · F vs M',49,51,'var(--brand)','var(--brand-2)')}
+          ${bar('Staff · F vs M',52,48,'var(--brand)','var(--brand-2)')}
+          ${bar('Admin · F vs M',47,53,'var(--brand)','var(--brand-2)')}
+        </div>
+        <div class="muted" style="font-size:11.5px">Raw gap narrows to <b>3.1%</b> after controlling for rank, tenure, and salary grade — within the ≤5% fairness threshold.</div></div>
+      <div class="card card-pad" style="background:var(--surface-2)">
+        <div class="hd mb">${icon('sparkles')} Findings & recommendations</div>
+        <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.75;color:var(--ink-2)">
+          <li><b>2 employees</b> sit below their salary-band minimum — flagged for review in the next cycle.</li>
+          <li><b>Compression</b> detected between Associate Professor I and II (₱1,800 apart) — consider a step adjustment.</li>
+          <li>Median <b>compa-ratio 0.94</b> — slightly under market midpoint; benchmark against PH HEI survey data.</li>
+        </ul></div>
+      <div class="alertbar ai mt">${icon('shield')} Advisory only — compensation adjustments require HR and management approval. External benchmark data is an optional add-on.</div>`,
+      foot:`<button class="btn" data-close>Close</button><button class="btn primary" onclick="UI.closeModal();MC.go('reports')">${icon('chart')} Open reports</button>`});
   };
   MC.runPayroll = function(){
     modal({title:'Run payroll',sub:'Simulation → validation → reconciliation',body:`

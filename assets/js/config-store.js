@@ -108,6 +108,28 @@ MC.CONFIG_DEFAULTS = {
   'timekeeping.graceMinutes': 15,
   'timekeeping.workStart': '08:00',
   'timekeeping.workEnd': '17:00',
+  // Work-schedule types (regular/flexible/shifting/hybrid/compressed) — configurable per TOR
+  'timekeeping.scheduleTypes': [
+    { name: 'Regular', code: 'REG', start: '08:00', end: '17:00', breakMins: 60, daysPerWeek: 5, hoursPerDay: 8, coreHours: '08:00–17:00', note: 'Fixed daily schedule, Mon–Fri' },
+    { name: 'Flexible', code: 'FLEX', start: '07:00', end: '19:00', breakMins: 60, daysPerWeek: 5, hoursPerDay: 8, coreHours: '10:00–15:00', note: 'Flexible in/out within a window; core hours required' },
+    { name: 'Shifting', code: 'SHIFT', start: 'varies', end: 'varies', breakMins: 60, daysPerWeek: 5, hoursPerDay: 8, coreHours: 'per roster', note: 'Rotating AM/PM/Night shifts via roster' },
+    { name: 'Hybrid', code: 'HYB', start: '08:00', end: '17:00', breakMins: 60, daysPerWeek: 5, hoursPerDay: 8, coreHours: '08:00–17:00', note: '3 days on-site, 2 days remote (configurable)' },
+    { name: 'Compressed', code: 'CWW', start: '07:00', end: '18:00', breakMins: 60, daysPerWeek: 4, hoursPerDay: 10, coreHours: '07:00–18:00', note: '4-day week, 10 hrs/day (compressed work week)' },
+  ],
+  // Configurable attendance rules / labor standards (drive auto-computation)
+  'timekeeping.rules': {
+    graceMinutes: 15,              // late only counts after this grace period
+    halfDayThresholdHrs: 4,        // worked hours below this = half day
+    minOtMinutes: 60,              // OT credited only beyond this, after shift end
+    otRoundingMinutes: 30,         // OT rounded down to this increment
+    breakMinutes: 60,              // unpaid meal break deducted from worked hours
+    nightDiffStart: '22:00',       // night differential window start
+    nightDiffEnd: '06:00',         // night differential window end
+    undertimeCounts: true,         // deduct undertime from pay
+    maxOtHoursPerDay: 4,           // cap on claimable OT per day
+    requireApprovalForOt: true,    // OT must be pre-approved to be paid
+    autoDeductAbsentNoFiling: true,// absence w/o filing auto-deducts
+  },
   // 12 biometric devices across 3 campuses (per site survey)
   'timekeeping.devices': [
     { id: 'QC-M10-001', campus: 'Quezon City', location: 'Gate 01', type: 'M10 Fingerprint', status: 'Connected' },
@@ -219,6 +241,17 @@ MC.CONFIG_DEFAULTS = {
   'hr.dependentRelationships': ['Spouse', 'Child', 'Parent', 'Sibling'],
   'hr.contractAlertWindowDays': 45,
   'hr.employeeStatuses': ['Active', 'On Leave', 'Suspended', 'Separated'],
+  // Configurable 201-File custom fields — add/modify/remove without custom programming (TOR §Customization)
+  'records.customFields': [
+    { label: 'PRC License No.', type: 'text', section: 'Government / Licensure', required: false },
+    { label: 'PRC Expiry', type: 'date', section: 'Government / Licensure', required: false },
+    { label: 'Highest Degree Attained', type: 'select', options: ['Bachelor', 'Master', 'Doctorate', 'Post-Doctorate'], section: 'Educational Background', required: false },
+    { label: 'Emergency Contact Name', type: 'text', section: 'Personal Information', required: true },
+    { label: 'Emergency Contact No.', type: 'text', section: 'Personal Information', required: true },
+    { label: 'Blood Type', type: 'select', options: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'], section: 'Medical History', required: false },
+  ],
+  'records.fieldTypes': ['text', 'number', 'date', 'select', 'checkbox'],
+  'records.sections': ['Personal Information', 'Employment Information', 'Service Record', 'Family Background', 'Educational Background', 'Government / Licensure', 'Work History', 'Medical History', 'Training / Seminars'],
 
   /* ---- Payroll (advanced) ---- */
   'payroll.deductionTypes': ['Withholding Tax', 'SSS', 'PhilHealth', 'Pag-IBIG', 'Loans'],

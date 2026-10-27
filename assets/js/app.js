@@ -303,6 +303,7 @@ MC.renderApp = function () {
         <div id="headTitle"></div>
         <div class="spacer"></div>
         <div class="search" id="searchBox">${icon('search')}<input placeholder="${searchPlaceholder()}" id="globalSearch"><kbd>Ctrl K</kbd></div>
+        <button class="btn sm" id="btnInstall" title="Install the HRIS app" style="display:${MC._installPrompt?'inline-flex':'none'};gap:6px">${icon('download')} Install app</button>
         <button class="icon-btn" id="btnNotif" title="Notifications" aria-label="Notifications">${icon('bell')}${(MC.notifSets&&(MC.notifSets[MC.state.role]||[]).some(x=>x.unread))?'<span class="dot"></span>':''}</button>
         ${(window.MC&&MC.config&&MC.config.get('features',{}).ai_assistant===false)?'':`<button class="icon-btn" id="btnHelp" title="AI Assistant">${icon('sparkles')}</button>`}
         <div class="userchip" id="userChip">
@@ -322,6 +323,7 @@ MC.renderApp = function () {
   $('#nav').addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { const it = e.target.closest('[data-route]'); if (it) { e.preventDefault(); MC.go(it.dataset.route); closeMobileNav(); } } });
   $('#btnMenu').addEventListener('click', () => $('.app').classList.toggle('nav-open'));
   $('#navBackdrop').addEventListener('click', closeMobileNav);
+  $('#btnInstall')?.addEventListener('click', () => MC.installApp());
   $('#btnNotif').addEventListener('click', () => MC.openNotifications());
   $('#btnHelp')?.addEventListener('click', () => MC.openAI());
   $('#aiFab')?.addEventListener('click', () => MC.openAI());
@@ -541,6 +543,27 @@ MC.aiSend = function (text) {
     typing.insertAdjacentHTML('afterend', `<div class="ai-chips"><div class="ai-chips-label">Suggested next</div>${sug.map(c => `<div class="ai-chip">${c}</div>`).join('')}</div>`);
     body.scrollTop = body.scrollHeight;
   }, 700);
+};
+
+/* ---------- PWA install (Add to Home Screen) ---------- */
+MC._installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  MC._installPrompt = e;
+  $$('#btnInstall').forEach(b => { b.style.display = 'inline-flex'; });
+});
+window.addEventListener('appinstalled', () => {
+  MC._installPrompt = null;
+  $$('#btnInstall').forEach(b => { b.style.display = 'none'; });
+  toast('App installed', 'ok', 'Miriam College HRIS is now on your home screen');
+});
+MC.installApp = async function () {
+  const e = MC._installPrompt;
+  if (!e) { toast('Install from your browser', 'info', 'Use “Add to Home Screen” (Share menu on iOS) to install'); return; }
+  e.prompt();
+  try { await e.userChoice; } catch (_) {}
+  MC._installPrompt = null;
+  $$('#btnInstall').forEach(b => { b.style.display = 'none'; });
 };
 
 /* ---------- Esc closes the topmost overlay ---------- */

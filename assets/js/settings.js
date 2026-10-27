@@ -12,7 +12,7 @@
   const TABS = [
     ['org', 'Organization'], ['features', 'Feature Flags'], ['recruitment', 'Recruitment'],
     ['leave', 'Leave'], ['employment', 'Employment'], ['payroll', 'Payroll'], ['benefits', 'Benefits'],
-    ['performance', 'Performance'], ['timekeeping', 'Timekeeping'], ['compliance', 'Compliance'],
+    ['performance', 'Performance'], ['timekeeping', 'Timekeeping'], ['records', 'Employee 201'], ['compliance', 'Compliance'],
     ['rbac', 'Roles & Access'], ['ai', 'AI Governance'], ['workflow', 'Workflows'], ['integrations', 'Integrations'],
     ['migration', 'Data Migration'], ['advanced', 'Advanced (JSON)'],
   ];
@@ -124,8 +124,26 @@
         { k: 'education', label: 'Education', type: 'num' }, { k: 'research', label: 'Research', type: 'num' }, { k: 'teaching', label: 'Teaching', type: 'num' }, { k: 'service', label: 'Service', type: 'num' }] });
 
     if (t === 'timekeeping') return kvGroup() +
+      objTable('timekeeping.scheduleTypes', { title: 'Work-schedule types', sub: 'Regular / flexible / shifting / hybrid / compressed — drives the DTR computation', cols: [
+        { k: 'name', label: 'Name' }, { k: 'code', label: 'Code' }, { k: 'start', label: 'Start' }, { k: 'end', label: 'End' },
+        { k: 'breakMins', label: 'Break (min)', type: 'num' }, { k: 'daysPerWeek', label: 'Days/wk', type: 'num' }, { k: 'hoursPerDay', label: 'Hrs/day', type: 'num' }, { k: 'coreHours', label: 'Core hours' }] }) +
+      kv('timekeeping.rules', { title: 'Attendance rules & labor standards', sub: 'Auto-computation of tardiness, undertime, overtime, night differential', fields: [
+        { k: 'graceMinutes', label: 'Grace period', type: 'num', suffix: 'min' }, { k: 'breakMinutes', label: 'Meal break', type: 'num', suffix: 'min' },
+        { k: 'halfDayThresholdHrs', label: 'Half-day threshold', type: 'num', suffix: 'hrs' }, { k: 'minOtMinutes', label: 'Minimum OT', type: 'num', suffix: 'min' },
+        { k: 'otRoundingMinutes', label: 'OT rounding', type: 'num', suffix: 'min' }, { k: 'maxOtHoursPerDay', label: 'Max OT / day', type: 'num', suffix: 'hrs' },
+        { k: 'nightDiffStart', label: 'Night diff start' }, { k: 'nightDiffEnd', label: 'Night diff end' },
+        { k: 'undertimeCounts', label: 'Deduct undertime', type: 'bool' }, { k: 'requireApprovalForOt', label: 'OT needs pre-approval', type: 'bool' },
+        { k: 'autoDeductAbsentNoFiling', label: 'Auto-deduct unfiled absence', type: 'bool' }] }) +
       strList('timekeeping.captureModes', { title: 'Capture methods', ph: 'e.g. QR code' }) +
       objTable('timekeeping.devices', { title: 'Biometric devices', cols: [{ k: 'id', label: 'Device ID' }, { k: 'campus', label: 'Campus' }, { k: 'location', label: 'Location' }, { k: 'type', label: 'Type' }, { k: 'status', label: 'Status' }] });
+
+    if (t === 'records') return strTitle('Employee 201') +
+      `<div class="card card-pad mb" style="background:var(--surface-2)"><div class="row" style="gap:10px;color:var(--brand);font-weight:600;font-size:15px">${icon('settings')} Custom fields</div>
+        <p style="font-size:13.5px;color:var(--ink-2);margin:10px 0 0;line-height:1.6">Add, modify, or remove 201-File fields <b>without custom programming</b>. Custom fields appear in the employee profile under their assigned section.</p></div>` +
+      objTable('records.customFields', { title: '201-File custom fields', sub: 'type: text · number · date · select · checkbox. For select, list options under Advanced (JSON).', cols: [
+        { k: 'label', label: 'Field label' }, { k: 'type', label: 'Type' }, { k: 'section', label: 'Section' }, { k: 'required', label: 'Required', type: 'bool' }] }) +
+      strList('records.sections', { title: '201-File sections', sub: 'Groups that fields are filed under', ph: 'e.g. Awards & Recognition' }) +
+      strList('records.fieldTypes', { title: 'Allowed field types', ph: 'e.g. textarea' });
 
     if (t === 'compliance') return strTitle('Compliance') +
       objTable('compliance.reports', { title: 'Government reports', sub: 'Statutory filing calendar', cols: [{ k: 'agency', label: 'Agency' }, { k: 'form', label: 'Form' }, { k: 'freq', label: 'Frequency' }, { k: 'due', label: 'Due' }] });
@@ -301,7 +319,13 @@
   }
   function readTable(key) {
     const tbl = document.querySelector(`[data-table="${key}"]`); if (!tbl) return G.config.get(key, []);
-    return [...tbl.querySelectorAll('tbody tr')].map((tr) => { const o = {}; tr.querySelectorAll('[data-col]').forEach((inp) => { o[inp.dataset.col] = inp.type === 'checkbox' ? inp.checked : (inp.dataset.type === 'num' ? (parseFloat(inp.value) || 0) : inp.value); }); return o; });
+    const orig = G.config.get(key, []);
+    return [...tbl.querySelectorAll('tbody tr')].map((tr) => {
+      // Preserve any keys the table doesn't show as columns (e.g. select `options`).
+      const o = (tr.dataset.row != null && orig[+tr.dataset.row]) ? { ...orig[+tr.dataset.row] } : {};
+      tr.querySelectorAll('[data-col]').forEach((inp) => { o[inp.dataset.col] = inp.type === 'checkbox' ? inp.checked : (inp.dataset.type === 'num' ? (parseFloat(inp.value) || 0) : inp.value); });
+      return o;
+    });
   }
   function readKv(root) {
     const o = {};
