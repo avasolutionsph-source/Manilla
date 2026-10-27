@@ -73,16 +73,48 @@ Planning → data mapping → **cleansing** → test migration → validation �
 - **Options:** **1-year** and **3-year** support packages — scope and pricing in §10.
 - Release, patch, upgrade, and maintenance notifications.
 
-## 10. Commercial Summary *(placeholders — to finalize)*
-| Item | 1-year | 3-year |
+## 10. Commercial Summary *(competitive indicative offer — market-researched, to finalize in contract)*
+
+**Scope basis:** ~412 employees · 3 campuses (Quezon City, Nuvali, Alviera) · all modules + AI + Faculty Ranking + Employee Self-Service + installable mobile (PWA) + SAP journal-entry interface + M10/facial biometrics.
+
+**Our competitive positioning.** Philippine HRIS subscriptions run **₱79–149 PEPM (SME)**, **₱150–300 PEPM (mid-market)**, and **₱300+ / ~$4–8 PEPM (enterprise)** (2026 market research — sources below). We offer Miriam a **blended ₱200 per-employee-per-month**, at the mid-market rate while delivering **enterprise scope** (AI, faculty ranking, SAP integration, multi-campus) — training bundled and statutory-table maintenance included.
+
+### Year-1 (indicative)
+| Item | Amount (₱) | Basis |
 |---|---|---|
-| Licenses / subscription | `[ ]` | `[ ]` |
-| Implementation (one-time) | `[ ]` | `[ ]` |
-| Integration & migration | `[ ]` | `[ ]` |
-| Training | `[ ]` | `[ ]` |
-| Support & maintenance | `[ ]` | `[ ]` |
-- **Assumptions / dependencies:** `[biometric device access, SAP interface specs, data readiness, network]`.
-- **Optional modules / add-ons:** `[ ]`.
+| Subscription — all modules + AI (412 × ₱200 × 12) | **990,000** | Mid-market PEPM; enterprise scope |
+| Implementation (config, UAT, go-live, hypercare) | **450,000** | PH impl range ₱20k–200k (SME) scaled for enterprise/multi-campus |
+| Integration & migration (SAP interface, biometrics, 1 school-year data) | **550,000** | Sprout 500-emp model (impl ₱500k + migration ₱500k + compliance ₱250k), scaled |
+| Training (role-based, all user groups) | **Bundled** | Included to stay competitive |
+| Support & maintenance (8×5, Year 1) | **Included** | 24×7 premium optional (below) |
+| **Year-1 total (indicative)** | **≈ 1,990,000** | |
+
+### 3-Year Total Cost of Ownership (indicative)
+| Item | Amount (₱) | Note |
+|---|---|---|
+| Subscription (3 yrs, ~12% multi-year lock discount) | **≈ 2,610,000** | ~₱870k/yr locked vs ₱990k Year-1 rate |
+| One-time implementation + integration & migration | **1,000,000** | Year-1 only |
+| **3-Year TCO (indicative)** | **≈ 3,610,000** | Excludes optional hardware / 24×7 |
+
+> **Benchmark check.** Akrivia's 2026 worked example for a **200-employee, 3-region** company gives a 3-year TCO of **₱1.3M (standard)** to **₱2.19M (modular add-ons)**. Scaled to Miriam's **412 employees + AI + SAP + faculty ranking**, our **₱3.61M** 3-year offer is competitive for the enterprise scope and avoids the per-module and recurring-compliance surcharges that inflate modular bids.
+
+- **Assumptions / dependencies:** College provides biometric-device network access, **SAP interface specifications**, source-data extracts in agreed format, and campus network/VPN access; prices assume cloud hosting (PH/regional region).
+- **Optional add-ons (not in base):**
+  - **Biometric devices** if purchased new (~8 fingerprint + 4 facial): **₱95,000–280,000** one-time (PH prices: ZKTeco fingerprint ₱4,350–8,250 each; facial ~₱15k–40k each).
+  - **24×7 premium support** (payroll cutoff, go-live critical windows): **≈ ₱180,000 / yr**.
+  - **Additional school-years of data migration** beyond the first: per-year quote.
+  - **On-premises / hybrid hosting** instead of cloud: infrastructure cost per the College's environment.
+
+> ⚠️ **These are competitive, market-based indicative figures for budgeting**, derived from 2026 Philippine HRIS pricing research — **not a final quotation**. Final line items are confirmed in the signed contract. We recommend the College also request itemized quotes from 2–3 vendors to compare.
+
+**Sources (2026 pricing research):**
+[Akrivia HCM — HR/Payroll pricing PH](https://akriviahcm.com/blog/hr-payroll-software-pricing-philippines) ·
+[Sprout — HRIS 3-Year TCO guide](https://sprout.ph/articles/hris-total-cost-of-ownership-3-year-guide-philippines/) ·
+[Go-Tropa — Best HRIS PH 2026 buyer's guide](https://go-tropa.com/blog/tropa-1/best-hris-software-in-the-philippines-the-2026-buyer-s-guide-11) ·
+[KAMI Workforce — HRIS in the Philippines](https://kamiworkforce.com/ph/blog/what-is-hris-philippines/) ·
+[Omni HR — HRIS cost FAQ](https://www.omnihr.co/faqs/how-much-does-an-hris-system-cost-in-the-philippines) ·
+[hr.software — Sprout Solutions review](https://www.hr.software/reviews/sprout-solutions) ·
+[PC Express — ZKTeco device prices](https://pcx.com.ph/collections/all-products/zkteco)
 
 ## 11. Technical Compliance Matrix
 Per the TOR, a completed matrix (Fully / Partially / Not Compliant; Standard / Configurable / Custom / Third-Party) is provided — see **`TOR-COMPLIANCE.md`**, to be finalized into the official submission format.

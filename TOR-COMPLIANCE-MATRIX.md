@@ -180,18 +180,20 @@ Project Manager · Solution Architect · Module Consultants (HR, Payroll, Benefi
 
 ## §6. Indicative Pricing *(researched estimates — final figures are the College's to confirm via vendor quotes)*
 
-**How we derived these:** Philippine HRIS/payroll SaaS commonly runs **₱50–300 per employee/month (PEPM)** for SMEs, **₱450–1,200 PEPM** for mid-market suites, and **enterprise ~₱300+ / ~$4–8 PEPM**; concrete published tiers include GreatDay ~₱77 (min 50 seats), Sprout ~₱200–300, PayrollHero ~₱120–200, Salarium ~₱180–280, Tropa ₱99–149. One-time **implementation/customization** runs **₱150k–₱500k+** (standard setups ₱10k–50k), and a vendor model for a 500-employee firm shows ~**₱500k implementation + ₱500k migration/integration + ₱250k compliance customization**. Biometric devices (PH): ZKTeco fingerprint units ~**₱4,350–8,250**; facial/multi-biometric typically higher (≈₱15k–40k est.).
+**How we derived these (2026 Philippine market research):** HRIS/payroll SaaS runs **₱79–149 PEPM (SME)**, **₱150–300 PEPM (mid-market)**, and **₱300+ / ~$4–8 PEPM (enterprise)**. Concrete published rates: Tropa **₱99–149**, OneHRIS **from ₱150** (ex-VAT), Hier **₱150**/active emp, MPM **₱56**/emp (₱1,120/mo min), Sprout standard software quote-based (**~₱200–300** per third-party estimates; outsourced-payroll starter ₱7,900/mo for ≤10 emp), Zoho People **~$1.25–1.50**, Omni HR **from $3**. One-time **implementation** runs **₱20k–200k** in PH (KAMI) for standard setups; a vendor model for a 500-employee firm shows ~**₱500k implementation + ₱500k migration/integration + ₱250k compliance customization**; PH config add-ons (semi-monthly/multi pay cycle ₱20k–80k, BIR alphalist ₱15k–40k/update) apply where not native. Biometric devices (PH): ZKTeco fingerprint **₱4,350–8,250** (PC Express); facial/multi-biometric typically higher (**≈₱15k–40k** est.).
 
 **Estimate for Miriam College (~412 employees, 3 campuses, AI + faculty ranking + SAP):**
 
 | Item | Low | Mid | High | Basis |
 |---|---|---|---|---|
-| Annual subscription (PEPM) | ₱0.9M (₱180) | ₱1.24M (₱250) | ₱1.73M (₱350) | 412 × PEPM × 12 |
+| Annual subscription (PEPM) | ₱0.74M (₱150) | ₱0.99M (₱200) | ₱1.48M (₱300) | 412 × PEPM × 12 · mid-market rate, enterprise scope |
 | One-time implementation (config, migration, integration incl. **SAP**, compliance customization) | ₱500k | ₱850k | ₱1.25M | Vendor 500-emp model, scaled |
-| Biometric devices (if new; ~6–8 units) | ₱60k | ₱150k | ₱280k | PH device prices |
+| Biometric devices (if new; ~8 FP + 4 facial) | ₱95k | ₱150k | ₱280k | PH device prices |
 | Training (if not bundled) | included | ₱60k | ₱150k | Varies |
-| **Year-1 total (indicative)** | **~₱1.5M** | **~₱2.3M** | **~₱3.4M** | sum |
-| **3-year TCO (indicative, w/ ~10–15% multi-year discount)** | **~₱3.4M** | **~₱5.2M** | **~₱7.5M** | 3× subscription + one-time + hardware |
+| **Year-1 total (indicative)** | **~₱1.3M** | **~₱2.05M** | **~₱3.2M** | sum |
+| **3-year TCO (indicative, w/ ~10–15% multi-year discount)** | **~₱2.6M** | **~₱3.6M** | **~₱5.4M** | 3× subscription (discounted) + one-time + hardware |
+
+> **Competitive offer:** the **Mid** column (**~₱2.05M Year-1 / ~₱3.6M 3-year** at a blended **₱200 PEPM**, training bundled) is our recommended competitive bid for Miriam — mid-market rate with enterprise scope. See **`BID-PROPOSAL.md` §10** for the itemized commercial summary. *Benchmark:* Akrivia's 2026 worked example (200 emp, 3 regions) gives a 3-year TCO of ₱1.3M (standard) to ₱2.19M (modular); our ₱3.6M scales that to 412 employees plus AI, SAP, and faculty ranking.
 
 > ⚠️ **These are market-based estimates for budgeting only, not a quote.** Actual price depends on final scope, number of modules, AI usage, hosting choice, SAP interface complexity, and support tier. **Request written, itemized quotes** from 2–3 vendors to compare.
 
@@ -217,6 +219,10 @@ Project Manager · Solution Architect · Module Consultants (HR, Payroll, Benefi
 - [Sprout Solutions Review — hr.software](https://www.hr.software/reviews/sprout-solutions)
 - [Best HR Software Philippines — WorksPHR](https://worksphr.com/blog/best-hr-software-philippines)
 - [Low-cost HR/Payroll (Tropa) — Go-Tropa](https://go-tropa.com/blog/tropa-1/best-hris-software-in-the-philippines-the-2026-buyer-s-guide-11)
+- [What is an HRIS (implementation fees ₱20k–200k) — KAMI Workforce](https://kamiworkforce.com/ph/blog/what-is-hris-philippines/)
+- [How much does an HRIS cost in the Philippines — Omni HR](https://www.omnihr.co/faqs/how-much-does-an-hris-system-cost-in-the-philippines)
 - [ZKTeco devices (PH prices) — PC Express](https://pcx.com.ph/collections/all-products/zkteco)
+
+*Pricing researched October 2026; vendor rates change — confirm with current written quotes.*
 
 *Compliance ratings, solution types, and estimates are a proposed response for the College/bidder to finalize. Pricing is indicative market research, not a quotation.*
