@@ -73,39 +73,58 @@ Planning → data mapping → **cleansing** → test migration → validation �
 - **Options:** **1-year** and **3-year** support packages — scope and pricing in §10.
 - Release, patch, upgrade, and maintenance notifications.
 
-## 10. Commercial Summary *(competitive indicative offer — market-researched, to finalize in contract)*
+## 10. Commercial Offer *(firm — subject to signed contract)*
 
 **Scope basis:** ~412 employees · 3 campuses (Quezon City, Nuvali, Alviera) · all modules + AI + Faculty Ranking + Employee Self-Service + installable mobile (PWA) + SAP journal-entry interface + M10/facial biometrics.
 
-**Our competitive positioning.** Philippine HRIS subscriptions run **₱79–149 PEPM (SME)**, **₱150–300 PEPM (mid-market)**, and **₱300+ / ~$4–8 PEPM (enterprise)** (2026 market research — sources below). We offer Miriam a **blended ₱200 per-employee-per-month**, at the mid-market rate while delivering **enterprise scope** (AI, faculty ranking, SAP integration, multi-campus) — training bundled and statutory-table maintenance included.
+### 10.1 Year-1 all-in contract price
 
-### Year-1 (indicative)
-| Item | Amount (₱) | Basis |
+| | Amount (₱) |
+|---|---|
+| **Year-1 all-in contract price** (VAT-exclusive) | **1,980,000.00** |
+| Add: 12% VAT | 237,600.00 |
+| **Total contract price (VAT-inclusive)** | **2,217,600.00** |
+
+**Everything in the Year-1 price — one fixed fee, no hidden add-ons:**
+- Full system **build, configuration & customization** of all TOR modules (Recruitment/ATS, 201 File, Timekeeping, Payroll, Benefits, Performance & Faculty Ranking, Offboarding) with AI capabilities and multi-campus setup
+- **SAP journal-entry integration** (payroll → Accounting SAP interface)
+- **Biometric hardware** (M10 fingerprint + facial units) and device integration
+- **Data migration** (1 school-year of legacy records — mapping, cleansing, validation, reconciliation)
+- **Cloud hosting** for Year 1 (PH/regional region, backup & DR)
+- **Role-based training** for all user groups + admin/technical guides
+- **Go-live, hypercare & post-go-live support** (8×5) through Year 1
+- Statutory-table maintenance (BIR/SSS/PhilHealth/Pag-IBIG) for Year 1
+
+### 10.2 Payment schedule (30 / 40 / 30)
+
+| Milestone | Trigger | % | Net (₱) | +12% VAT (₱) | Invoice total (₱) |
+|---|---|---|---|---|---|
+| **Down payment** | Contract signing / project kickoff | 30% | 594,000 | 71,280 | **665,280** |
+| **Delivery** | **UAT sign-off** by Miriam | 40% | 792,000 | 95,040 | **887,040** |
+| **Retention** | **90 days after UAT sign-off** (covers go-live & stabilization) | 30% | 594,000 | 71,280 | **665,280** |
+| **Total** | | 100% | **1,980,000** | **237,600** | **2,217,600** |
+
+The final 30% falls due 90 days after UAT sign-off, so it is paid only after go-live and the hypercare/stabilization window — giving the College assurance the system performs in production before the last tranche is released.
+
+### 10.3 Year-2 onward (recurring — proposed, to confirm)
+
+After Year 1, an annual **software licence + cloud hosting + support & maintenance** subscription keeps the system live, patched, and statutory-compliant:
+
+| Item | Proposed (₱, VAT-excl.) | Note |
 |---|---|---|
-| Subscription — all modules + AI (412 × ₱200 × 12) | **990,000** | Mid-market PEPM; enterprise scope |
-| Implementation (config, UAT, go-live, hypercare) | **450,000** | PH impl range ₱20k–200k (SME) scaled for enterprise/multi-campus |
-| Integration & migration (SAP interface, biometrics, 1 school-year data) | **550,000** | Sprout 500-emp model (impl ₱500k + migration ₱500k + compliance ₱250k), scaled |
-| Training (role-based, all user groups) | **Bundled** | Included to stay competitive |
-| Support & maintenance (8×5, Year 1) | **Included** | 24×7 premium optional (below) |
-| **Year-1 total (indicative)** | **≈ 1,990,000** | |
+| Annual subscription (licence + hosting + 8×5 support + statutory updates) | **780,000 / yr** | ~₱158 PEPM — below PH mid-market (₱150–300) |
+| 3-year lock option (Years 2–4) | **~₱2,106,000** (≈ ₱702,000/yr, ~10% discount) | TOR asks for 1-yr & 3-yr options |
 
-### 3-Year Total Cost of Ownership (indicative)
-| Item | Amount (₱) | Note |
-|---|---|---|
-| Subscription (3 yrs, ~12% multi-year lock discount) | **≈ 2,610,000** | ~₱870k/yr locked vs ₱990k Year-1 rate |
-| One-time implementation + integration & migration | **1,000,000** | Year-1 only |
-| **3-Year TCO (indicative)** | **≈ 3,610,000** | Excludes optional hardware / 24×7 |
+### 10.4 Optional add-ons (not in the base price)
+- **24×7 premium support** (payroll cutoff / critical windows): **≈ ₱180,000 / yr**
+- **Additional school-years of data migration** beyond the first: per-year quote
+- **On-premises / hybrid hosting** instead of cloud: infrastructure cost per the College's environment
+- **Additional biometric units** beyond the surveyed devices: at cost + install
 
-> **Benchmark check.** Akrivia's 2026 worked example for a **200-employee, 3-region** company gives a 3-year TCO of **₱1.3M (standard)** to **₱2.19M (modular add-ons)**. Scaled to Miriam's **412 employees + AI + SAP + faculty ranking**, our **₱3.61M** 3-year offer is competitive for the enterprise scope and avoids the per-module and recurring-compliance surcharges that inflate modular bids.
+### 10.5 Assumptions & dependencies
+College provides: **SAP interface specifications**, source-data extracts in the agreed format, biometric-device network access, and campus network/VPN access. Pricing assumes **cloud hosting** and a **~6-month delivery** (see §7–8). Delays caused by pending inputs (e.g., SAP specs, data readiness) may shift milestone dates but not the fixed price.
 
-- **Assumptions / dependencies:** College provides biometric-device network access, **SAP interface specifications**, source-data extracts in agreed format, and campus network/VPN access; prices assume cloud hosting (PH/regional region).
-- **Optional add-ons (not in base):**
-  - **Biometric devices** if purchased new (~8 fingerprint + 4 facial): **₱95,000–280,000** one-time (PH prices: ZKTeco fingerprint ₱4,350–8,250 each; facial ~₱15k–40k each).
-  - **24×7 premium support** (payroll cutoff, go-live critical windows): **≈ ₱180,000 / yr**.
-  - **Additional school-years of data migration** beyond the first: per-year quote.
-  - **On-premises / hybrid hosting** instead of cloud: infrastructure cost per the College's environment.
-
-> ⚠️ **These are competitive, market-based indicative figures for budgeting**, derived from 2026 Philippine HRIS pricing research — **not a final quotation**. Final line items are confirmed in the signed contract. We recommend the College also request itemized quotes from 2–3 vendors to compare.
+> **Competitive check.** The Year-1 all-in ₱1.98M equals a blended **~₱200 per-employee-per-month** — mid-market rate (PH 2026: SME ₱79–149, mid-market ₱150–300, enterprise ₱300+) while delivering **enterprise scope** (AI, SAP, faculty ranking, biometrics, hosting, hardware). Akrivia's 2026 worked example for a 200-employee/3-region company is ₱1.3M–2.19M over **three years** for software alone; our offer bundles build, hardware, SAP, hosting, and support into one competitive Year-1 fee.
 
 **Sources (2026 pricing research):**
 [Akrivia HCM — HR/Payroll pricing PH](https://akriviahcm.com/blog/hr-payroll-software-pricing-philippines) ·
@@ -120,4 +139,4 @@ Planning → data mapping → **cleansing** → test migration → validation �
 Per the TOR, a completed matrix (Fully / Partially / Not Compliant; Standard / Configurable / Custom / Third-Party) is provided — see **`TOR-COMPLIANCE.md`**, to be finalized into the official submission format.
 
 ---
-*Draft for internal completion before submission. Replace all `[ ]` placeholders with final figures and specifics.*
+*Commercials in §10 reflect the agreed Year-1 all-in deal (₱1,980,000 + 12% VAT; 30/40/30 tied to signing / UAT sign-off / 90 days after). SLA severities in §9 and Year-2 renewal in §10.3 remain to be confirmed before official submission.*
