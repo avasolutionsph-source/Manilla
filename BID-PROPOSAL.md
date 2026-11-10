@@ -2,7 +2,7 @@
 
 **Prepared for:** Miriam College — ICT Office & HR Division
 **Re:** Human Resources and Information System (HRIS) — response to Terms of Reference
-**Status:** Draft outline for completion. Commercial figures are placeholders `[ ]` to be finalized.
+**Status:** Proposal draft. Commercial terms in §10 are firm (Year-1 all-in ₱1,980,000 + 12% VAT; 30/40/30 payment). A few technical details remain to be confirmed with the College before official submission.
 
 > This document covers the **proposal-stage** requirements of the TOR (architecture, security, integration, migration, implementation, training & support, pricing). The **functional and AI capabilities** are demonstrated in the working prototype; see `TOR-COMPLIANCE.md` for the requirement-by-requirement matrix.
 
@@ -56,12 +56,13 @@ Planning → data mapping → **cleansing** → test migration → validation �
 ## 8. Implementation Plan & Schedule
 | Phase | Activities | Indicative duration |
 |---|---|---|
-| 1. Initiation & fit-gap | Validate requirements vs TOR; project charter | `[ ]` |
-| 2. Configuration | Org, roles, workflows, pay rules, benefits | `[ ]` |
-| 3. Integration & migration | SAP, biometrics, APIs; test migration | `[ ]` |
-| 4. Testing | Functional, security, integration, **UAT** | `[ ]` |
-| 5. Training | Admin & all user groups | `[ ]` |
-| 6. Go-live & hypercare | Cutover, **rollback plan**, stabilization | `[ ]` |
+| 1. Initiation & fit-gap | Validate requirements vs TOR; project charter | ~2–4 weeks |
+| 2. Configuration | Org, roles, workflows, pay rules, benefits | ~6–10 weeks |
+| 3. Integration & migration | SAP, biometrics, APIs; test migration | ~4–8 weeks (parallel) |
+| 4. Testing | Functional, security, integration, **UAT** | ~3–5 weeks |
+| 5. Training | Admin & all user groups | ~2–3 weeks (parallel) |
+| 6. Go-live & hypercare | Cutover, **rollback plan**, stabilization | ~2–4 weeks |
+| **Total** | | **~6 months** (scope-dependent) |
 - **Team structure:** PM, solution architect, module consultants, integration & data engineers, trainer, support lead.
 - **Deliverables:** configuration docs, test results, training materials, runbooks, knowledge transfer.
 
@@ -69,7 +70,7 @@ Planning → data mapping → **cleansing** → test migration → validation �
 - **Training:** role-based for HR, payroll, benefits, recruitment, performance, faculty ranking, L&D, ICT, finance, supervisors, and employees; user/admin/technical guides and materials.
 - **Support channels:** phone, chat, email, onsite, remote.
 - **Availability:** minimum **8×5**, with **24/7 where appropriate**.
-- **SLAs by severity:** `[P1 response/resolution; P2; P3; P4]`.
+- **SLAs by severity (proposed):** P1 (system down) respond ≤1 hr / resolve ≤4 hrs · P2 (major) ≤4 hrs / ≤1 day · P3 (minor) ≤1 day / ≤3 days · P4 (request) scheduled.
 - **Options:** **1-year** and **3-year** support packages — scope and pricing in §10.
 - Release, patch, upgrade, and maintenance notifications.
 
